@@ -1,0 +1,18 @@
+class_name PIG Accuracy: 0.31645569620253167
+starting!!!-----------------------------------------------
+Accuracy: 0.4
+Sensitivity: 1.0
+Specificity: 0.0
+Precision: 0.4
+Ending!!!------------------------------------------------------
+(1.0, 0.0)
+              precision    recall  f1-score   support
+
+           0       0.00      0.00      0.00       223
+           1       0.31      0.08      0.13        48
+           2       0.32      0.98      0.48       124
+
+    accuracy                           0.32       395
+   macro avg       0.21      0.35      0.20       395
+weighted avg       0.14      0.32      0.17       395
+
