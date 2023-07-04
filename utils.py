@@ -7,6 +7,7 @@ from sklearn.neighbors import NearestNeighbors
 import pandas as pd
 import numpy as np
 import torch
+from itertools import cycle
 
 def label_return(input_label_name, label):
     if label == 'train':
@@ -140,6 +141,7 @@ def plot_ROC(model_pred, y_test, n_classes):
     fpr["macro"] = all_fpr
     tpr["macro"] = mean_tpr
     roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
+    print("=========== AUC:", roc_auc["macro"])
 
     lw=2
     plt.figure(figsize=(8,5))

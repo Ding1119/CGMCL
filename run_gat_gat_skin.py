@@ -144,19 +144,18 @@ for epoch in training_range:
     # loss1 = criterion1(output1, y)
     # loss2 = criterion1(output2, y)
     # loss3 = criterion2(x_f_att_z, x_img_att_z, adjacency_matrix ,adj_train_img, y)
-#     loss3 = criterion2( emb, adj_train_img, adj_f_knn_train, y)
+#     
     loss1 = criterion5(output1, y)
     loss2 = criterion5(output2, y)
     
     adj = adj_train_img +  adj_f_knn_train
     diag = torch.diag(adj.sum(dim=1))
-
+    # loss3 = criterion2( emb, adj_train_img, adj_f_knn_train, y)
     loss4 = criterion3(output1, output2, adj, diag )
-#     loss4 = criterion3(emb, adj_train_img, adj_f_knn_train, y)
+    # loss4 = criterion3(emb, adj_train_img, adj_f_knn_train, y)
     
     
 
-    # loss3 = criterion2( output1, output2, y)
     
     # loss4 = criterion4(emb, y)
 
@@ -164,10 +163,10 @@ for epoch in training_range:
 
     alpha = 0.4
 #     loss = (1-alpha)*(loss1 + loss2) + alpha* loss3
-    loss = (1-alpha)*(loss1 + loss2) + alpha* loss4
+    # loss = (1-alpha)*(loss1 + loss2) + alpha* loss3
     # loss = (1-alpha)*loss1  + alpha * loss2
     
-#     loss = (1-alpha)*(loss1 + loss2) + alpha* loss4
+    loss = (1-alpha)*(loss1 + loss2) + alpha* loss4
 #     loss = loss1 + loss2 + loss3 + loss4
 
     
