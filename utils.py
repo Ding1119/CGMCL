@@ -99,8 +99,52 @@ def calculate_metrics_new(gt, pred):
     
     return Sensitivity, Specificity
 
+def print_auc(model_pred, y_test, n_classes ,name, image_type, loss_select):
+        
+#     iris = datasets.load_iris()
+#     x = iris.data[:, 2:]
+#     y = iris.target
+#     x_test = x
+#     y_test = y
+#     n_classes=3
+    '''NAIVE BAYES'''
 
-def plot_ROC(model_pred, y_test, n_classes):
+    
+#     input_model=model
+#     input_model.fit(x_train, y_train)
+#     nb=model.score(x_train, y_train)
+
+    pred1=model_pred
+    t1=sum(x==0 for x in pred1-y_test)/len(pred1)
+
+
+
+    ### MACRO
+    fpr = dict()
+    tpr = dict()
+    roc_auc = dict()
+
+    for i in range(n_classes):
+        fpr[i], tpr[i], _ = roc_curve(np.array(pd.get_dummies(y_test))[:, i], np.array(pd.get_dummies(pred1))[:, i])
+        roc_auc[i] = auc(fpr[i], tpr[i])
+
+
+    all_fpr = np.unique(np.concatenate([fpr[i] for i in range(n_classes)]))
+
+    mean_tpr = np.zeros_like(all_fpr)
+    for i in range(n_classes):
+        mean_tpr += interp(all_fpr, fpr[i], tpr[i])
+
+    mean_tpr /= n_classes
+
+    fpr["macro"] = all_fpr
+    tpr["macro"] = mean_tpr
+    roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
+    print("=========== AUC:", roc_auc["macro"])
+
+
+
+def plot_auc(model_pred, y_test, n_classes ,name, image_type, loss_select):
     
 #     iris = datasets.load_iris()
 #     x = iris.data[:, 2:]
@@ -162,8 +206,9 @@ def plot_ROC(model_pred, y_test, n_classes):
     plt.annotate('Random Guess',(.5,.48),color='red')
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
-    plt.title('Receiver Operating Characteristic for Naive Bayes - IRIS DATASET')
+    plt.title(f'Receiver Operating Characteristic {image_type} for {name} via {loss_select}')
     plt.legend(loc="lower right")
     
 
-    return plt.show()
+    # return plt.show()
+    return plt.savefig(f'{image_type}_{name}_{loss_select}_ROC.png')

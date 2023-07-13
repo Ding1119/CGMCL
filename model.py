@@ -176,12 +176,12 @@ class GAT_f(nn.Module):
         return logits
     
 class Model(nn.Module):
-    def __init__(self, projection, input_resnet):
+    def __init__(self, projection, input_resnet, n_classes):
         super(Model, self).__init__()
         # self.encoder = CNNEncoder()
-        self.kmeans = KMeans(n_clusters=3)
         self.cnn_encoder = CNN()
         self.input_resnet = input_resnet
+        self.n_classes = n_classes
  
         # self.cnn_encoder = DeepEncoder() #torch.Size([300, 3, 64, 64])
         # self.cnn_encoder = CNNEncoder()
@@ -197,8 +197,8 @@ class Model(nn.Module):
         self.linear1 = nn.Linear(259, 2)
         self.linear2 = nn.Linear(256, 2)
         self.linear3 = nn.Linear(1030, 256)
-        self.linear4 = nn.Linear(256,3)
-        self.linear_f = nn.Linear(14,3)
+        self.linear4 = nn.Linear(256,self.n_classes)
+        self.linear_f = nn.Linear(14,self.n_classes)
         self.attention_f = AttentionNetwork_f(11)
         self.attention_img = AttentionNetwork_img(1027)
         self.sigmoid = nn.Sigmoid()

@@ -1,0 +1,94 @@
+starting!!!-----------------------------------------------
+Accuracy: 0.6686390532544378
+Sensitivity: 0.7553191489361702
+Specificity: 0.56
+Precision: 0.6826923076923077
+Ending!!!------------------------------------------------------
+(0.7553191489361702, 0.56)
+Loss: Contrastive_loss class_name DaG Accuracy: 0.5645569620253165
+              precision    recall  f1-score   support
+
+           0       0.51      0.42      0.46       100
+           1       0.46      0.60      0.52       118
+           2       0.69      0.62      0.65       177
+
+    accuracy                           0.56       395
+   macro avg       0.55      0.55      0.55       395
+weighted avg       0.58      0.56      0.57       395
+
+=========== AUC: 0.663896877982032
+starting!!!-----------------------------------------------
+Accuracy: 0.8958333333333334
+Sensitivity: 0.4864864864864865
+Specificity: 0.9704433497536946
+Precision: 0.75
+Ending!!!------------------------------------------------------
+(0.4864864864864865, 0.9704433497536946)
+Loss: Contrastive_loss class_name PIG Accuracy: 0.7164556962025317
+              precision    recall  f1-score   support
+
+           0       0.75      0.88      0.81       223
+           1       0.53      0.38      0.44        48
+           2       0.69      0.55      0.61       124
+
+    accuracy                           0.72       395
+   macro avg       0.66      0.60      0.62       395
+weighted avg       0.70      0.72      0.70       395
+
+=========== AUC: 0.7113979229634988
+starting!!!-----------------------------------------------
+Accuracy: 0.7590361445783133
+Sensitivity: 0.7844827586206896
+Specificity: 0.7368421052631579
+Precision: 0.7222222222222222
+Ending!!!------------------------------------------------------
+(0.7844827586206896, 0.7368421052631579)
+Loss: Contrastive_loss class_name PN Accuracy: 0.5974683544303797
+              precision    recall  f1-score   support
+
+           0       0.65      0.63      0.64       156
+           1       0.63      0.62      0.63       146
+           2       0.47      0.51      0.49        93
+
+    accuracy                           0.60       395
+   macro avg       0.58      0.59      0.58       395
+weighted avg       0.60      0.60      0.60       395
+
+=========== AUC: 0.6911552938575773
+starting!!!-----------------------------------------------
+Accuracy: 0.8530465949820788
+Sensitivity: 0.5609756097560976
+Specificity: 0.9033613445378151
+Precision: 0.5
+Ending!!!------------------------------------------------------
+(0.5609756097560976, 0.9033613445378151)
+Loss: Contrastive_loss class_name STR Accuracy: 0.6987341772151898
+              precision    recall  f1-score   support
+
+           0       0.81      0.84      0.82       257
+           1       0.34      0.52      0.41        44
+           2       0.63      0.40      0.49        94
+
+    accuracy                           0.70       395
+   macro avg       0.59      0.59      0.57       395
+weighted avg       0.71      0.70      0.70       395
+
+=========== AUC: 0.6975753406596475
+starting!!!-----------------------------------------------
+Accuracy: 0.8555555555555555
+Sensitivity: 0.0
+Specificity: 1.0
+Precision: nan
+Ending!!!------------------------------------------------------
+(0.0, 1.0)
+Loss: Contrastive_loss class_name VS Accuracy: 0.779746835443038
+              precision    recall  f1-score   support
+
+           0       0.79      0.98      0.88       313
+           1       0.00      0.00      0.00        52
+           2       0.00      0.00      0.00        30
+
+    accuracy                           0.78       395
+   macro avg       0.26      0.33      0.29       395
+weighted avg       0.63      0.78      0.69       395
+

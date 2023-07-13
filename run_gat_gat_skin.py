@@ -20,13 +20,13 @@ from skimage import data_dir,io,color
 from torch.autograd import Variable
 from sklearn.metrics import classification_report
 from sklearn import preprocessing
-from utils import build_knn_graph, label_return, plot_ROC, calculate_metrics_new
+from utils import build_knn_graph, label_return, plot_auc, print_auc, calculate_metrics_new
 from model import Projection, Model, CNN
 from losses import WeightedCrossEntropyLoss, contrastive_loss, info_loss, MGECLoss, SACLoss
 import argparse
 # device = torch.device("mps" if torch.cuda.is_available() else "cpu")
 
-def train_eval(datadir,skin_type, metadir, loss_select ,classes, epoch):
+def train_eval(datadir,skin_type, metadir, loss_select ,classes, epoch, n_classes):
     device = torch.device("mps")
 
     resnet = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1)
@@ -37,11 +37,11 @@ def train_eval(datadir,skin_type, metadir, loss_select ,classes, epoch):
     resnet.fc = nn.Linear(num_features, num_classes)
     resnet.fc = resnet.fc.to(device)
 
-    path_img = datadir + skin_type
+    path_img = datadir + skin_type + '/'
     path_meta = metadir
-    raw_image_train = np.load(path_img  + 'train_derm_img_413.npy') 
+    raw_image_train = np.load(path_img  + 'train_clinic_img_413.npy') 
 
-    raw_image_test = np.load(path_img  + 'test_derm_img_395.npy') 
+    raw_image_test = np.load(path_img  + 'test_clinic_img_395.npy') 
 
     # raw_image_train = np.load('/Users/test/Documents/Contrastive_PD/skin_dataset_ok/clinical_images/train_clinic_f_413.npy') /255
     # raw_image_test = np.load('/Users/test/Documents/Contrastive_PD/skin_dataset_ok/clinical_images/test_clinic_f_395.npy') /255
@@ -95,11 +95,10 @@ def train_eval(datadir,skin_type, metadir, loss_select ,classes, epoch):
     adj_f_knn_test = build_knn_graph(raw_f_test, 300).float()
 
     projection = Projection(262, 3)
-    model = Model(projection, resnet).to(device)
+    model = Model(projection, resnet, n_classes).to(device)
     
     
-
-    class_weights = torch.tensor([0.5, 0.5,0.5])  # 自定義的類別權重
+    class_weights = torch.full((1,n_classes),0.5).view(-1)
     criterion1 = WeightedCrossEntropyLoss(weight=class_weights)
 
     if loss_select == 'Contrastive_loss':
@@ -162,7 +161,7 @@ def train_eval(datadir,skin_type, metadir, loss_select ,classes, epoch):
 
         loss.backward()
         optimizer.step()
-
+        torch.save(model,f'./saved_model/{skin_type}_{epoch}epoch_save.pt')
         # print('Epoch [{}/{}], Loss: {:.4f}'.format(epoch+1, n_epochs, loss.item()))
 
     model.eval()
@@ -173,7 +172,7 @@ def train_eval(datadir,skin_type, metadir, loss_select ,classes, epoch):
         adj_test_img = adj_test_img.to(device)
         adj_f_knn_test = adj_f_knn_test.to(device)
         
-        test_output1, test_output2, emb  = model(image_data_test, test_feature_data , adj_test_img, adj_f_knn_test  )
+        test_output1, test_output2, emb  = model(image_data_test, test_feature_data , adj_test_img, adj_f_knn_test )
 
         # test_output1  = model(test_image_data, test_adjacency_matrix, adj_test_img )
         m = nn.Softmax(dim=1)
@@ -192,13 +191,14 @@ def train_eval(datadir,skin_type, metadir, loss_select ,classes, epoch):
         
         correct = (pred  == y_test).sum().item()
         accuracy = correct / len(y_test)
-        print("class_name",class_name,"Accuracy:", accuracy)
+        
         # import pdb;pdb.set_trace()
         print(calculate_metrics_new(y_test.cpu().detach().numpy(), pred.cpu().detach().numpy() ))
+        print("Loss:", loss_select, "class_name",class_name,"Accuracy:", accuracy)
         print(classification_report(y_test.cpu().detach().numpy(), pred.cpu().detach().numpy() ))
         
-        plot_ROC(pred.cpu().detach().numpy() , y_test.cpu().detach().numpy(), 3)
-
+        # plot_ROC(pred.cpu().detach().numpy() , y_test.cpu().detach().numpy(), 3, classes, skin_type, loss_select)
+        print_auc(pred.cpu().detach().numpy() , y_test.cpu().detach().numpy(), 3, classes, skin_type, loss_select)
 
 def main():
     parser = argparse.ArgumentParser()
@@ -208,9 +208,10 @@ def main():
     parser.add_argument('--losses_choice', type=str)
     parser.add_argument('--classes', type=str)
     parser.add_argument('--n_epoch', type=int)
+    parser.add_argument('--n_classes', type=int)
     
     args = parser.parse_args()
-    train_eval(args.img_data_dir, args.skin_type, args.meta_data_dir, args.losses_choice, args.classes, args.n_epoch)
+    train_eval(args.img_data_dir, args.skin_type, args.meta_data_dir, args.losses_choice, args.classes, args.n_epoch, args.n_classes)
 
 
 if __name__ == '__main__':
