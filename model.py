@@ -207,7 +207,7 @@ class Model(nn.Module):
     def forward(self, x, x_f,adjacency_img, adjacency_f):
         # import pdb;pdb.set_trace()
         # x = self.encoder(x) #torch.Size([300, 65536])
-#         import pdb;pdb.set_trace()
+        
         x_encoder = self.input_resnet(x)
         
 #         x_encoder = self.cnn_encoder(x)

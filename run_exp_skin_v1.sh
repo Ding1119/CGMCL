@@ -8,5 +8,6 @@ do
     --losses_choice ${losses_select} \
     --classes ${i} \
     --n_epoch 8 \
-    --n_classes 3 >> logs/skin_${image_type}_${losses_select}_logs.txt
+    --n_classes 3
+    # --n_classes 3 >> logs/skin_${image_type}_${losses_select}_logs.txt
 done
