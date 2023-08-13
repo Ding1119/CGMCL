@@ -1,10 +1,12 @@
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
-device = torch.device("mps")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def contrastive_loss(emb, adj1, adj2, label):
 
+def contrastive_loss(emb, adj1, adj2, label, emb1, emb2, diag):
+    mse_loss = nn.MSELoss()
+    bce_loss = nn.BCEWithLogitsLoss()
     # embeddings1_normalized = F.normalize(emb1, p=2, dim=1)
     # embeddings2_normalized = F.normalize(emb2, p=2, dim=1)
     # similarity_matrix = torch.matmul(embeddings1_normalized, embeddings2_normalized.t())
@@ -62,8 +64,14 @@ def contrastive_loss(emb, adj1, adj2, label):
     penalty_term = torch.mean(torch.sum(torch.exp(negative_pairs) / torch.sum(torch.exp(negative_pairs), dim=1, keepdim=True), dim=1))
     penalty_coeff = 0.001
     # loss = positive_loss + negative_loss 
-
-    loss = positive_loss  + negative_loss 
+    diagonal_loss = mse_loss(torch.matmul(emb1, emb2.t()), diag)
+    similarity_scores = torch.matmul(emb1, emb2.t())  # (batch_size, batch_size)
+    similarity_probs = torch.sigmoid(similarity_scores)
+                    
+    adj = adj1 + adj2
+                            # 計算相似性損失
+    similarity_loss = bce_loss(similarity_scores, adj)
+    loss = positive_loss  + negative_loss   + diagonal_loss
     # loss = positive_loss + negative_loss 
     # loss = torch.log(loss + 1e-8)
     return loss / ((2 * batch_size) **2)
@@ -72,7 +80,7 @@ def contrastive_loss(emb, adj1, adj2, label):
 class WeightedCrossEntropyLoss(nn.Module):
     def __init__(self, weight=None, reduction='mean'):
         super(WeightedCrossEntropyLoss, self).__init__()
-        self.weight = weight.to(device)
+        self.weight = weight
         self.reduction = reduction
 
     def forward(self, inputs, targets):

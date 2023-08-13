@@ -1,0 +1,92 @@
+starting!!!-----------------------------------------------
+Accuracy: 0.546448087431694
+Sensitivity: 1.0
+Specificity: 0.10752688172043011
+Precision: 0.5202312138728323
+Ending!!!------------------------------------------------------
+(1.0, 0.10752688172043011)
+Loss: InfoNCE_loss class_name DaG Accuracy: 0.6860759493670886
+              precision    recall  f1-score   support
+
+           0       1.00      0.10      0.18       100
+           1       0.50      0.76      0.61       118
+           2       0.83      0.97      0.89       177
+
+    accuracy                           0.69       395
+   macro avg       0.78      0.61      0.56       395
+weighted avg       0.78      0.69      0.63       395
+
+=========== AUC: 0.7244939102695447
+starting!!!-----------------------------------------------
+Accuracy: 0.8228782287822878
+Sensitivity: 0.0
+Specificity: 1.0
+Precision: nan
+Ending!!!------------------------------------------------------
+(0.0, 1.0)
+Loss: InfoNCE_loss class_name PIG Accuracy: 0.6379746835443038
+              precision    recall  f1-score   support
+
+           0       0.61      1.00      0.76       223
+           1       0.00      0.00      0.00        48
+           2       1.00      0.23      0.38       124
+
+    accuracy                           0.64       395
+   macro avg       0.54      0.41      0.38       395
+weighted avg       0.66      0.64      0.55       395
+
+starting!!!-----------------------------------------------
+Accuracy: 0.8996655518394648
+Sensitivity: 0.8881118881118881
+Specificity: 0.9102564102564102
+Precision: 0.900709219858156
+Ending!!!------------------------------------------------------
+(0.8881118881118881, 0.9102564102564102)
+Loss: InfoNCE_loss class_name PN Accuracy: 0.7924050632911392
+              precision    recall  f1-score   support
+
+           0       0.87      0.91      0.89       156
+           1       0.69      0.87      0.77       146
+           2       0.94      0.47      0.63        93
+
+    accuracy                           0.79       395
+   macro avg       0.83      0.75      0.76       395
+weighted avg       0.82      0.79      0.78       395
+
+=========== AUC: 0.8204176821660425
+starting!!!-----------------------------------------------
+Accuracy: 0.8538205980066446
+Sensitivity: 0.0
+Specificity: 1.0
+Precision: nan
+Ending!!!------------------------------------------------------
+(0.0, 1.0)
+Loss: InfoNCE_loss class_name STR Accuracy: 0.7265822784810126
+              precision    recall  f1-score   support
+
+           0       0.70      1.00      0.83       257
+           1       0.00      0.00      0.00        44
+           2       1.00      0.32      0.48        94
+
+    accuracy                           0.73       395
+   macro avg       0.57      0.44      0.44       395
+weighted avg       0.70      0.73      0.65       395
+
+starting!!!-----------------------------------------------
+Accuracy: 0.8575342465753425
+Sensitivity: 0.0
+Specificity: 1.0
+Precision: nan
+Ending!!!------------------------------------------------------
+(0.0, 1.0)
+Loss: InfoNCE_loss class_name VS Accuracy: 0.7924050632911392
+              precision    recall  f1-score   support
+
+           0       0.79      1.00      0.88       313
+           1       0.00      0.00      0.00        52
+           2       0.00      0.00      0.00        30
+
+    accuracy                           0.79       395
+   macro avg       0.26      0.33      0.29       395
+weighted avg       0.63      0.79      0.70       395
+

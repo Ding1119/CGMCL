@@ -21,27 +21,36 @@ from torch.autograd import Variable
 from sklearn.metrics import classification_report
 from sklearn import preprocessing
 from utils import build_knn_graph, label_return, plot_auc, print_auc, calculate_metrics_new
-from model import Projection, Model, CNN
+from model_resnet import Projection, Model, CNN
 from losses import WeightedCrossEntropyLoss, contrastive_loss, info_loss, MGECLoss, SACLoss
 import argparse
 from data_handlder.load_dataset import dataloader
-# device = torch.device("mps" if torch.cuda.is_available() else "cpu")
+#device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+import os
+#os.environ['CUDA_LAUNCH_BLOCKING'] = "0"
+
 
 def train_eval(datadir,skin_type, metadir, loss_select ,classes, epoch, n_classes):
-    device = torch.device("mps")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")   
 
-    resnet = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1)
-    resnet = resnet.to(device)
+    #resnet = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1)
+    resnet = models.resnet18(pretrained=True)
+    #resnet = models.alexnet(pretrained=True)
+    
+    #resnet = models.vgg19(pretrained=True)
+    #resnet = resnet.to(device)
     # 将最后一层的输出维度修改为类别数目
     num_classes = 1024
     num_features = resnet.fc.in_features
     resnet.fc = nn.Linear(num_features, num_classes)
-    resnet.fc = resnet.fc.to(device)
+    #resnet.fc = resnet.fc.to(device)
+
+
 
     image_data_train, feature_data_train, adj_train_img, adj_f_knn_train, image_data_test, test_feature_data, adj_test_img, adj_f_knn_test = dataloader(datadir,skin_type, metadir)
 
     projection = Projection(262, 3)
-    model = Model(projection, resnet, n_classes).to(device)
+    model = Model(projection, resnet, n_classes)
     
     
     class_weights = torch.full((1,n_classes),0.5).view(-1)
@@ -72,38 +81,45 @@ def train_eval(datadir,skin_type, metadir, loss_select ,classes, epoch, n_classe
         # cnn_z  =  cnn_encoder(image_data)
         # 前向传播
         
-        image_data_train = image_data_train.to(device)
-        feature_data_train = feature_data_train.to(device)
-        adj_train_img = adj_train_img.to(device)
-        adj_f_knn_train = adj_f_knn_train.to(device)
+        image_data_train = image_data_train
+        feature_data_train = feature_data_train
+        adj_train_img = adj_train_img
+        adj_f_knn_train = adj_f_knn_train
         
         
         output1, output2, emb = model(image_data_train , feature_data_train,adj_train_img, adj_f_knn_train)
-
-        y = torch.tensor(label_return(class_name, "train")).to(device)
-
+         
+        y = torch.tensor(label_return(class_name, "train"))
+        
         loss_ce1 = criterion1(output1, y)
         loss_ce2 = criterion1(output2, y)
+        alpha = 0.4
 
         if loss_select == 'Contrastive_loss':
-            loss_extra = criterion2( emb, adj_train_img, adj_f_knn_train, y)
+            adj = adj_train_img +  adj_f_knn_train
+            diag = torch.diag(adj.sum(dim=1))
+            loss_extra = criterion2( emb, adj_train_img, adj_f_knn_train, y, output1, output2, diag)
+            loss = (1-alpha)*(loss_ce1 + loss_ce2) + alpha* loss_extra
 
         elif loss_select == 'MGEC_loss':
             adj = adj_train_img +  adj_f_knn_train
             diag = torch.diag(adj.sum(dim=1))
             loss_extra = criterion2(output1, output2, adj, diag )
+            loss = (1-alpha)*(loss_ce1+loss_ce2) + alpha* loss_extra
+            #loss = loss_extra
 
         elif loss_select == 'InfoNCE_loss':
             loss_extra = criterion2( emb, adj_train_img, adj_f_knn_train, y)
+            loss = (1-alpha)*(loss_ce1+loss_ce2) + alpha* loss_extra
 
-        elif loss_select == 'SAC_loss':
-                adj = adj_train_img +  adj_f_knn_train
-                diag = torch.diag(adj.sum(dim=1))
-                loss_extra = criterion2(output1, output2, adj)
+        elif loss_select == 'SAC_loss':    
+            adj = adj_train_img +  adj_f_knn_train
+            diag = torch.diag(adj.sum(dim=1))
+            loss_extra = criterion2(emb, adj)
+            loss = (1-alpha)*(loss_ce1+loss_ce2) + alpha* loss_extra
+        elif loss_select == 'only_CE':
+            loss = loss_ce1 + loss_ce2
 
-        alpha = 0.4
-       
-        loss = (1-alpha)*(loss_ce1 + loss_ce2) + alpha* loss_extra
 
         loss.backward()
         optimizer.step()
@@ -113,10 +129,10 @@ def train_eval(datadir,skin_type, metadir, loss_select ,classes, epoch, n_classe
     model.eval()
     with torch.no_grad():
         # import pdb;pdb.set_trace()
-        image_data_test = image_data_test.to(device)
-        test_feature_data = test_feature_data.to(device)
-        adj_test_img = adj_test_img.to(device)
-        adj_f_knn_test = adj_f_knn_test.to(device)
+        image_data_test = image_data_test
+        test_feature_data = test_feature_data
+        adj_test_img = adj_test_img
+        adj_f_knn_test = adj_f_knn_test
         
         test_output1, test_output2, emb  = model(image_data_test, test_feature_data , adj_test_img, adj_f_knn_test )
 
@@ -126,7 +142,18 @@ def train_eval(datadir,skin_type, metadir, loss_select ,classes, epoch, n_classe
         test_output = test_output1 + test_output2
     #     test_output = emb
 
+        #z = test_output1 + test_output2
+        
+        #num_clusters = 3
+        #kmeans = KMeans(n_clusters=num_clusters)
+
+        #cluster_labels = kmeans.fit_predict(z.cpu().data.numpy())
+        #cluster_labels = torch.tensor(cluster_labels,dtype=torch.int64).to(device)
+
+
+
         pred =  m(test_output).argmax(dim=1)
+        #pred = cluster_labels
         # test_output = test_output.argmax(dim=1)
         
         
@@ -148,9 +175,9 @@ def train_eval(datadir,skin_type, metadir, loss_select ,classes, epoch, n_classe
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--img_data_dir', type=str, default='/Users/test/Documents/Contrastive_PD/skin_dataset_ok/')
+    parser.add_argument('--img_data_dir', type=str, default='/home/ldap_ jeding/jeding/PD_contrastive_research/skin_dataset_ok/')
     parser.add_argument('--skin_type', type=str)
-    parser.add_argument('--meta_data_dir', type=str, default='/Users/test/Documents/Contrastive_PD/skin_dataset_ok/meta_ok/')
+    parser.add_argument('--meta_data_dir', type=str, default='/home/ldap_ jeding/jeding/PD_contrastive_research/skin_dataset_ok/meta_ok/')
     parser.add_argument('--losses_choice', type=str)
     parser.add_argument('--classes', type=str)
     parser.add_argument('--n_epoch', type=int)
