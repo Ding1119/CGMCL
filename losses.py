@@ -17,9 +17,9 @@ def contrastive_loss(emb, adj1, adj2, label, emb1, emb2, diag):
 
     
     
-    label = F.one_hot(label , num_classes = 3)
+    label = F.one_hot(label , num_classes = 3).to(device)
     
-
+    similarity_matrix = similarity_matrix.to(device)
     batch_size = similarity_matrix.size(0)
 #     eye = torch.eye(batch_size, device=similarity_matrix.device)
     # import pdb;pdb.set_trace()
@@ -31,9 +31,12 @@ def contrastive_loss(emb, adj1, adj2, label, emb1, emb2, diag):
     # negative_pairs = (similarity_matrix * (1- adj1)) + (similarity_matrix * (1- adj2))
    
  
-    
-    positive_pairs = similarity_matrix * (adj1 + adj2) 
+    adj1 = adj1.to(device)
+    adj2 = adj2.to(device)
+    positive_pairs = similarity_matrix * (adj1 + adj2)
+    positive_pairs = positive_pairs.to(device)
     negative_pairs = similarity_matrix * ((1- adj1) + (1-adj2))  
+    negative_pairs = negative_pairs.to(device)
     # import pdb;pdb.set_trace()
     # positive_pairs = torch.mm(similarity_matrix, adj1.to(torch.float32))
     # negative_pairs = torch.mm(similarity_matrix, (1-adj2).to(torch.float32))
@@ -80,11 +83,12 @@ def contrastive_loss(emb, adj1, adj2, label, emb1, emb2, diag):
 class WeightedCrossEntropyLoss(nn.Module):
     def __init__(self, weight=None, reduction='mean'):
         super(WeightedCrossEntropyLoss, self).__init__()
-        self.weight = weight
+        self.weight = weight.to(device)
         self.reduction = reduction
 
     def forward(self, inputs, targets):
 #         import pdb;pdb.set_trace()
+
         loss = nn.functional.cross_entropy(inputs, targets, weight=self.weight, reduction=self.reduction)
         return loss
     

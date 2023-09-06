@@ -12,11 +12,11 @@ from itertools import cycle
 def label_return(input_label_name, label):
     if label == 'train':
 
-        raw_train_label = pd.read_csv('/home/ldap_ jeding/jeding/PD_contrastive_research/skin_dataset_ok/train_labels_df_413.csv') 
+        raw_train_label = pd.read_csv('/home/feng/jeding/PD_contrastive_research_0817/skin_dataset_ok/train_labels_df_413.csv') 
         return np.array(raw_train_label[f'{input_label_name}'])
     else:
 
-        raw_test_label = pd.read_csv('/home/ldap_ jeding/jeding/PD_contrastive_research/skin_dataset_ok/test_labels_df_395.csv')
+        raw_test_label = pd.read_csv('/home/feng/jeding/PD_contrastive_research_0817/skin_dataset_ok/test_labels_df_395.csv')
         return np.array(raw_test_label[f'{input_label_name}'])
 
 def build_knn_graph(input_data, k):

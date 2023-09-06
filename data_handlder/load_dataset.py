@@ -17,9 +17,9 @@ def dataloader(datadir,skin_type,metadir):
 
     path_img = datadir + skin_type + '/'
     path_meta = metadir
-    raw_image_train = np.load(path_img  + 'train_derm_img_413.npy') 
+    raw_image_train = np.load(path_img  + 'train_derm_f_413.npy') 
 
-    raw_image_test = np.load(path_img  + 'test_derm_img_395.npy') 
+    raw_image_test = np.load(path_img  + 'test_derm_f_395.npy') 
 
     # raw_image_train = np.load('/Users/test/Documents/Contrastive_PD/skin_dataset_ok/clinical_images/train_clinic_f_413.npy') /255
     # raw_image_test = np.load('/Users/test/Documents/Contrastive_PD/skin_dataset_ok/clinical_images/test_clinic_f_395.npy') /255
