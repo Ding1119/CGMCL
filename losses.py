@@ -14,9 +14,6 @@ def contrastive_loss(emb, adj1, adj2, label, emb1, emb2, diag):
     # similarity_matrix = emb1 @ emb2.T
     margin = 0.03
     # similarity_matrix = torch.mm(emb1, emb2.t())
-
-    
-    
     label = F.one_hot(label , num_classes = 3).to(device)
     
     similarity_matrix = similarity_matrix.to(device)
@@ -29,13 +26,11 @@ def contrastive_loss(emb, adj1, adj2, label, emb1, emb2, diag):
    
     # positive_pairs = (similarity_matrix * adj1) + (similarity_matrix * adj2)
     # negative_pairs = (similarity_matrix * (1- adj1)) + (similarity_matrix * (1- adj2))
-   
- 
     adj1 = adj1.to(device)
     adj2 = adj2.to(device)
-    positive_pairs = similarity_matrix * (adj1 + adj2)
+    positive_pairs = similarity_matrix * (adj1 + adj2) 
     positive_pairs = positive_pairs.to(device)
-    negative_pairs = similarity_matrix * ((1- adj1) + (1-adj2))  
+    negative_pairs = similarity_matrix * ((1- adj1) + (1-adj2)) 
     negative_pairs = negative_pairs.to(device)
     # import pdb;pdb.set_trace()
     # positive_pairs = torch.mm(similarity_matrix, adj1.to(torch.float32))
@@ -74,7 +69,7 @@ def contrastive_loss(emb, adj1, adj2, label, emb1, emb2, diag):
     adj = adj1 + adj2
                             # 計算相似性損失
     similarity_loss = bce_loss(similarity_scores, adj)
-    loss = positive_loss  + negative_loss   + diagonal_loss
+    loss = positive_loss  + negative_loss + diagonal_loss 
     # loss = positive_loss + negative_loss 
     # loss = torch.log(loss + 1e-8)
     return loss / ((2 * batch_size) **2)
@@ -99,16 +94,14 @@ def info_loss(emb, adj1, adj2, label):
     margin = 0.03
 
     num_classes = 3
-    
-    
-    label = F.one_hot(label , num_classes = 5)
+    label = F.one_hot(label , num_classes = 3)
     
 
     batch_size = similarity_matrix.size(0)
     eye = torch.eye(batch_size, device=similarity_matrix.device)
    
- 
     batch_size = similarity_matrix.size(0)
+    similarity_matrix = similarity_matrix.to(device)
     positive_pairs = similarity_matrix * (adj1 + adj2) 
     negative_pairs = similarity_matrix * ((1- adj1) + (1-adj2))  
     
@@ -118,7 +111,6 @@ def info_loss(emb, adj1, adj2, label):
     
     similarity_matrix_sum = torch.sum(positive_pairs, 1, keepdim=True)
     positives_sum = torch.matmul(similarity_matrix,label.to(torch.float32))
-#     import pdb;pdb.set_trace()
     loss = -torch.log(positives_sum * (similarity_matrix_sum**(-1)) + 1e-8).mean()
 
     

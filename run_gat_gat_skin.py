@@ -25,19 +25,20 @@ from model_resnet import Projection, Model, CNN
 from losses import WeightedCrossEntropyLoss, contrastive_loss, info_loss, MGECLoss, SACLoss
 import argparse
 from data_handlder.load_dataset import dataloader
-# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 import os
 # os.environ['CUDA_LAUNCH_BLOCKING'] = "0"
 
-
-def train_eval(datadir,skin_type, metadir, loss_select ,classes, epoch, n_classes):
+def train_eval(datadir,skin_type, metadir, loss_select, model_select ,classes, epoch, n_classes):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")   
 
-    #resnet = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1)
-    resnet = models.resnet34(pretrained=True)
+    if model_select == 'resnet_18':
+        resnet = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1)
+        # resnet = models.resnet18(pretrained=True)
+    elif model_select == 'resnet_34':
+         resnet = models.resnet34(pretrained=True)
+    elif model_select == 'resnet_50':
+        resnet = models.resnet50(pretrained=True)
     #resnet = models.alexnet(pretrained=True)
-    
-    #resnet = models.vgg19(pretrained=True)
     resnet = resnet.to(device)
     # 将最后一层的输出维度修改为类别数目
     num_classes = 1024
@@ -45,13 +46,10 @@ def train_eval(datadir,skin_type, metadir, loss_select ,classes, epoch, n_classe
     resnet.fc = nn.Linear(num_features, num_classes)
     resnet.fc = resnet.fc.to(device)
 
-
-
     image_data_train, feature_data_train, adj_train_img, adj_f_knn_train, image_data_test, test_feature_data, adj_test_img, adj_f_knn_test = dataloader(datadir,skin_type, metadir)
 
     projection = Projection(262, 3)
     model = Model(projection, resnet, n_classes).to(device)
-    
     
     class_weights = torch.full((1,n_classes),0.5).view(-1)
     criterion1 = WeightedCrossEntropyLoss(weight=class_weights)
@@ -178,13 +176,14 @@ def main():
     parser.add_argument('--img_data_dir', type=str, default='/home/feng/jeding/PD_contrastive_research_0817/skin_dataset_ok/')
     parser.add_argument('--skin_type', type=str)
     parser.add_argument('--meta_data_dir', type=str, default='/home/feng/jeding/PD_contrastive_research_0817/meta_ok/')
+    parser.add_argument('--model_select', type=str)
     parser.add_argument('--losses_choice', type=str)
     parser.add_argument('--classes', type=str)
     parser.add_argument('--n_epoch', type=int)
     parser.add_argument('--n_classes', type=int)
     
     args = parser.parse_args()
-    train_eval(args.img_data_dir, args.skin_type, args.meta_data_dir, args.losses_choice, args.classes, args.n_epoch, args.n_classes)
+    train_eval(args.img_data_dir, args.skin_type, args.meta_data_dir, args.losses_choice, args.model_select,args.classes, args.n_epoch, args.n_classes)
 
 
 if __name__ == '__main__':
