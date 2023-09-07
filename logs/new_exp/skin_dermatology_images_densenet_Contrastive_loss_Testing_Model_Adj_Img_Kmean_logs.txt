@@ -1,0 +1,113 @@
+> /home/feng/jeding/PD_contrastive_research_0817/run_gat_gat_skin.py(34)train_eval()
+-> if model_select == 'resnet_18':
+(Pdb) device(type='cuda')
+(Pdb) --KeyboardInterrupt--
+(Pdb) --KeyboardInterrupt--
+(Pdb) --KeyboardInterrupt--
+(Pdb) --KeyboardInterrupt--
+(Pdb) --KeyboardInterrupt--
+(Pdb) --KeyboardInterrupt--
+(Pdb) --KeyboardInterrupt--
+(Pdb) --KeyboardInterrupt--
+(Pdb) > /home/feng/jeding/PD_contrastive_research_0817/run_gat_gat_skin.py(34)train_eval()
+-> if model_select == 'resnet_18':
+(Pdb) ++++Use densenet model+++
+starting!!!-----------------------------------------------
+Accuracy: 0.7295597484276729
+Sensitivity: 0.813953488372093
+Specificity: 0.6301369863013698
+Precision: 0.7216494845360825
+Ending!!!------------------------------------------------------
+(0.813953488372093, 0.6301369863013698)
+Loss: Contrastive_loss class_name DaG Accuracy: 0.6126582278481013
+              precision    recall  f1-score   support
+
+           0       0.57      0.46      0.51       100
+           1       0.54      0.59      0.57       118
+           2       0.68      0.71      0.70       177
+
+    accuracy                           0.61       395
+   macro avg       0.60      0.59      0.59       395
+weighted avg       0.61      0.61      0.61       395
+
+=========== AUC: 0.6938003477065904
+++++Use densenet model+++
+starting!!!-----------------------------------------------
+Accuracy: 0.8660714285714286
+Sensitivity: 0.34210526315789475
+Specificity: 0.9731182795698925
+Precision: 0.7222222222222222
+Ending!!!------------------------------------------------------
+(0.34210526315789475, 0.9731182795698925)
+Loss: Contrastive_loss class_name PIG Accuracy: 0.6784810126582278
+              precision    recall  f1-score   support
+
+           0       0.72      0.81      0.76       223
+           1       0.57      0.27      0.37        48
+           2       0.61      0.60      0.60       124
+
+    accuracy                           0.68       395
+   macro avg       0.63      0.56      0.58       395
+weighted avg       0.67      0.68      0.67       395
+
+=========== AUC: 0.6783399662332346
+++++Use densenet model+++
+starting!!!-----------------------------------------------
+Accuracy: 0.8106060606060606
+Sensitivity: 0.7886178861788617
+Specificity: 0.8297872340425532
+Precision: 0.8016528925619835
+Ending!!!------------------------------------------------------
+(0.7886178861788617, 0.8297872340425532)
+Loss: Contrastive_loss class_name PN Accuracy: 0.6126582278481013
+              precision    recall  f1-score   support
+
+           0       0.66      0.75      0.70       156
+           1       0.63      0.66      0.65       146
+           2       0.42      0.30      0.35        93
+
+    accuracy                           0.61       395
+   macro avg       0.57      0.57      0.57       395
+weighted avg       0.60      0.61      0.60       395
+
+=========== AUC: 0.6863115821352894
+++++Use densenet model+++
+starting!!!-----------------------------------------------
+Accuracy: 0.8830188679245283
+Sensitivity: 0.21052631578947367
+Specificity: 0.9955947136563876
+Precision: 0.8888888888888888
+Ending!!!------------------------------------------------------
+(0.21052631578947367, 0.9955947136563876)
+Loss: Contrastive_loss class_name STR Accuracy: 0.6784810126582278
+              precision    recall  f1-score   support
+
+           0       0.72      0.88      0.79       257
+           1       0.62      0.18      0.28        44
+           2       0.49      0.36      0.41        94
+
+    accuracy                           0.68       395
+   macro avg       0.61      0.47      0.50       395
+weighted avg       0.66      0.68      0.65       395
+
+=========== AUC: 0.6109771654064334
+++++Use densenet model+++
+starting!!!-----------------------------------------------
+Accuracy: 0.8732782369146006
+Sensitivity: 0.39215686274509803
+Specificity: 0.9519230769230769
+Precision: 0.5714285714285714
+Ending!!!------------------------------------------------------
+(0.39215686274509803, 0.9519230769230769)
+Loss: Contrastive_loss class_name VS Accuracy: 0.8075949367088607
+              precision    recall  f1-score   support
+
+           0       0.85      0.95      0.89       313
+           1       0.50      0.38      0.43        52
+           2       0.50      0.07      0.12        30
+
+    accuracy                           0.81       395
+   macro avg       0.62      0.47      0.48       395
+weighted avg       0.77      0.81      0.78       395
+
+=========== AUC: 0.6129731275163182

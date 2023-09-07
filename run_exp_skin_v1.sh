@@ -1,6 +1,6 @@
-DIR=logs
-model_select='resnet_18'
-losses_select='InfoNCE_loss'
+DIR=logs/new_exp
+model_select='densenet'
+losses_select='Contrastive_loss'
 image_type='dermatology_images'
 for i in DaG PIG PN STR VS
 do
@@ -10,6 +10,6 @@ do
     --losses_choice ${losses_select} \
     --classes ${i} \
     --n_epoch 300 \
-    --n_classes 3 >> logs/skin_${image_type}_${model_select}_${losses_select}_Testing_Model_Adj_Img_Kmean_logs.txt
+    --n_classes 3 >> ${DIR}/skin_${image_type}_${model_select}_${losses_select}_Testing_Model_Adj_Img_Kmean_logs.txt
 
 done

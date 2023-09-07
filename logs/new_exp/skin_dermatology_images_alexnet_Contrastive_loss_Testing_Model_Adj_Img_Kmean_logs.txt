@@ -1,0 +1,39 @@
+++++Use alexnet model+++
+starting!!!-----------------------------------------------
+Accuracy: 0.5202312138728323
+Sensitivity: 1.0
+Specificity: 0.011904761904761904
+Precision: 0.5174418604651163
+Ending!!!------------------------------------------------------
+(1.0, 0.011904761904761904)
+Loss: Contrastive_loss class_name DaG Accuracy: 0.5822784810126582
+              precision    recall  f1-score   support
+
+           0       1.00      0.01      0.02       100
+           1       0.43      0.75      0.54       118
+           2       0.76      0.79      0.77       177
+
+    accuracy                           0.58       395
+   macro avg       0.73      0.52      0.45       395
+weighted avg       0.72      0.58      0.51       395
+
+=========== AUC: 0.6525937875624133
+++++Use alexnet model+++
+starting!!!-----------------------------------------------
+Accuracy: 0.8228782287822878
+Sensitivity: 0.0
+Specificity: 1.0
+Precision: nan
+Ending!!!------------------------------------------------------
+(0.0, 1.0)
+Loss: Contrastive_loss class_name PIG Accuracy: 0.610126582278481
+              precision    recall  f1-score   support
+
+           0       0.59      1.00      0.74       223
+           1       0.00      0.00      0.00        48
+           2       1.00      0.15      0.25       124
+
+    accuracy                           0.61       395
+   macro avg       0.53      0.38      0.33       395
+weighted avg       0.65      0.61      0.50       395
+

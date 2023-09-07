@@ -30,26 +30,34 @@ import os
 
 def train_eval(datadir,skin_type, metadir, loss_select, model_select ,classes, epoch, n_classes):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")   
-
+    
     if model_select == 'resnet_18':
-        resnet = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1)
+        model_net = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1)
         # resnet = models.resnet18(pretrained=True)
     elif model_select == 'resnet_34':
-         resnet = models.resnet34(pretrained=True)
+         model_net = models.resnet34(pretrained=True)
     elif model_select == 'resnet_50':
-        resnet = models.resnet50(pretrained=True)
+        model_net = models.resnet50(pretrained=True)
+    elif model_select == 'densenet':
+         model_net = models.densenet121(pretrained=True)
+        
     #resnet = models.alexnet(pretrained=True)
-    resnet = resnet.to(device)
+    
+    model_net = model_net.to(device)
     # 将最后一层的输出维度修改为类别数目
     num_classes = 1024
-    num_features = resnet.fc.in_features
-    resnet.fc = nn.Linear(num_features, num_classes)
-    resnet.fc = resnet.fc.to(device)
-
+    
+    # num_features = model_net.fc.in_features #512
+    num_features = model_net.classifier.in_features
+    # import pdb;pdb.set_trace()
+    # model_net.fc = nn.Linear(num_features, num_classes)
+    # model_net.fc = model_net.fc.to(device)
+    model_net.classifier = nn.Linear(num_features, num_classes)
+    # import pdb;pdb.set_trace()
     image_data_train, feature_data_train, adj_train_img, adj_f_knn_train, image_data_test, test_feature_data, adj_test_img, adj_f_knn_test = dataloader(datadir,skin_type, metadir)
 
     projection = Projection(262, 3)
-    model = Model(projection, resnet, n_classes).to(device)
+    model = Model(projection, model_net, n_classes).to(device)
     
     class_weights = torch.full((1,n_classes),0.5).view(-1)
     criterion1 = WeightedCrossEntropyLoss(weight=class_weights)
@@ -164,6 +172,7 @@ def train_eval(datadir,skin_type, metadir, loss_select, model_select ,classes, e
         accuracy = correct / len(y_test)
         
         # import pdb;pdb.set_trace()
+        print(f"++++Use {model_select} model+++")
         print(calculate_metrics_new(y_test.cpu().detach().numpy(), pred.cpu().detach().numpy() ))
         print("Loss:", loss_select, "class_name",class_name,"Accuracy:", accuracy)
         print(classification_report(y_test.cpu().detach().numpy(), pred.cpu().detach().numpy() ))
