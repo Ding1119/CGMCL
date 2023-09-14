@@ -157,6 +157,7 @@ class SACLoss(nn.Module):
     def forward(self, embeddings, adjacency_matrix):
         # 計算相似性概率
         similarity_matrix = torch.matmul(embeddings, embeddings.t())  # (batch_size, batch_size)
+        similarity_matrix = similarity_matrix.to(device)
         similarity_matrix /= self.temperature
         similarity_probs = F.softmax(similarity_matrix, dim=1)
         batch_size = similarity_matrix.size(0)

@@ -182,7 +182,7 @@ def train_eval(datadir,skin_type, metadir, loss_select, model_select ,classes, e
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--img_data_dir', type=str, default='/home/feng/jeding/PD_contrastive_research_0817/skin_dataset_ok/')
+    parser.add_argument('--img_data_dir', type=str, default='abide')
     parser.add_argument('--skin_type', type=str)
     parser.add_argument('--meta_data_dir', type=str, default='/home/feng/jeding/PD_contrastive_research_0817/meta_ok/')
     parser.add_argument('--model_select', type=str)
