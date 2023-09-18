@@ -13,24 +13,26 @@ def build_knn_graph(input_data, k):
         
     return adjacency_matrix
 
-def dataloader(datadir,skin_type,metadir):
+def dataloader(datadir,skin_type):
 
     if datadir == 'skin':
-        path_img = '/home/feng/jeding/PD_contrastive_research_0817/skin_dataset_ok/' + skin_type + '/'
-        path_meta = metadir
-        raw_image_train = np.load(path_img  + 'train_clinic_f_413.npy') 
 
-        raw_image_test = np.load(path_img  + 'test_clinic_f_395.npy') 
+        path_img = '/home/feng/jeding/PD_contrastive_research_0817/skin_dataset_ok/' + skin_type + '/'
+        raw_image_train = np.load(path_img  + 'train_derm_f_413.npy') 
+
+        raw_image_test = np.load(path_img  + 'test_derm_f_395.npy') 
         
         # raw_image_train = np.load('/Users/test/Documents/Contrastive_PD/skin_dataset_ok/clinical_images/train_clinic_f_413.npy') /255
         # raw_image_test = np.load('/Users/test/Documents/Contrastive_PD/skin_dataset_ok/clinical_images/test_clinic_f_395.npy') /255
 
-
-        raw_f_train = np.load(path_meta +'/meta_ok/'+ 'meta_train_413.npy')
-        raw_f_test = np.load(path_meta + '/meta_ok/' +'meta_test_395.npy')
+        
+        raw_f_train = np.load('/home/feng/jeding/PD_contrastive_research_0817/skin_dataset_ok/meta_ok/'+ 'meta_train_413.npy')
+        raw_f_test = np.load('/home/feng/jeding/PD_contrastive_research_0817/skin_dataset_ok/meta_ok/' +'meta_test_395.npy')
         raw_f_train = preprocessing.scale(raw_f_train )
         raw_f_test = preprocessing.scale(raw_f_test )
-
+        image_data_train = raw_image_train 
+        feature_data_train = raw_f_train 
+     
         image_data_train = torch.from_numpy(image_data_train ).float()
         image_data_train = torch.tensor(image_data_train ).transpose(1,3)
         feature_data_train = torch.from_numpy(feature_data_train).float()
@@ -72,7 +74,7 @@ def dataloader(datadir,skin_type,metadir):
     elif datadir == 'abide':
         path_img = '/home/feng/jeding/PD_contrastive_research_0817/data_storage'+ '/'
         path_meta = '/home/feng/jeding/PD_contrastive_research_0817/data_storage' + '/' 
-        
+        # import pdb;pdb.set_trace()
         raw_image_train = np.load(path_img  + 'X_train.npy') 
 
         raw_image_test = np.load(path_img  + 'X_test.npy') 

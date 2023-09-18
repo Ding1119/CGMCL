@@ -9,15 +9,30 @@ import numpy as np
 import torch
 from itertools import cycle
 
-def label_return(input_label_name, label):
-    if label == 'train':
+def label_return(dataset_choice, category,label):
+    if dataset_choice == 'skin':
+        if label == 'train':
+            
+            raw_train_label = pd.read_csv('/home/feng/jeding/PD_contrastive_research_0817/skin_dataset_ok/train_labels_df_413.csv') 
+            
+            return np.array(raw_train_label[f'{category}'])
+        else:
 
-        raw_train_label = pd.read_csv('/home/feng/jeding/PD_contrastive_research_0817/skin_dataset_ok/train_labels_df_413.csv') 
-        return np.array(raw_train_label[f'{input_label_name}'])
-    else:
+            raw_test_label = pd.read_csv('/home/feng/jeding/PD_contrastive_research_0817/skin_dataset_ok/test_labels_df_395.csv')
+            
+            return np.array(raw_test_label[f'{category}'])
+        
+    elif dataset_choice == 'abide':
+        if label == 'train':
 
-        raw_test_label = pd.read_csv('/home/feng/jeding/PD_contrastive_research_0817/skin_dataset_ok/test_labels_df_395.csv')
-        return np.array(raw_test_label[f'{input_label_name}'])
+            raw_train_label = np.load('/home/feng/jeding/PD_contrastive_research_0817/data_storage/y_train.npy') 
+            
+            return raw_train_label
+        else:
+            raw_test_label = np.load('/home/feng/jeding/PD_contrastive_research_0817/data_storage/y_test.npy') 
+            
+            return raw_test_label
+
 
 def build_knn_graph(input_data, k):
     knn = NearestNeighbors(n_neighbors=k)
