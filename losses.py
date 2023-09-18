@@ -69,7 +69,7 @@ def contrastive_loss(emb, adj1, adj2, label, emb1, emb2, diag):
     adj = adj1 + adj2
                             # 計算相似性損失
     similarity_loss = bce_loss(similarity_scores, adj)
-    loss = positive_loss  + negative_loss + diagonal_loss 
+    loss = positive_loss  + negative_loss + diagonal_loss + similarity_loss
     # loss = positive_loss + negative_loss 
     # loss = torch.log(loss + 1e-8)
     return loss / ((2 * batch_size) **2)
@@ -83,7 +83,7 @@ class WeightedCrossEntropyLoss(nn.Module):
 
     def forward(self, inputs, targets):
 #         import pdb;pdb.set_trace()
-
+        
         loss = nn.functional.cross_entropy(inputs, targets, weight=self.weight, reduction=self.reduction)
         return loss
     
