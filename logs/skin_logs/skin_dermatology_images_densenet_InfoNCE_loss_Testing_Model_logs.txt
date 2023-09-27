@@ -1,0 +1,100 @@
+++++Use densenet model+++
+starting!!!-----------------------------------------------
+Accuracy: 0.6923076923076923
+Sensitivity: 0.8297872340425532
+Specificity: 0.52
+Precision: 0.6842105263157895
+Ending!!!------------------------------------------------------
+(0.8297872340425532, 0.52)
+Loss: InfoNCE_loss class_name DaG Accuracy: 0.5569620253164557
+              precision    recall  f1-score   support
+
+           0       0.52      0.39      0.45       100
+           1       0.46      0.66      0.55       118
+           2       0.68      0.58      0.63       177
+
+    accuracy                           0.56       395
+   macro avg       0.55      0.54      0.54       395
+weighted avg       0.57      0.56      0.56       395
+
+=========== AUC: 0.6602039275513345
+++++Use densenet model+++
+starting!!!-----------------------------------------------
+Accuracy: 0.8594377510040161
+Sensitivity: 0.25
+Specificity: 0.9760765550239234
+Precision: 0.6666666666666666
+Ending!!!------------------------------------------------------
+(0.25, 0.9760765550239234)
+Loss: InfoNCE_loss class_name PIG Accuracy: 0.6632911392405063
+              precision    recall  f1-score   support
+
+           0       0.67      0.91      0.77       223
+           1       0.53      0.21      0.30        48
+           2       0.69      0.39      0.49       124
+
+    accuracy                           0.66       395
+   macro avg       0.63      0.50      0.52       395
+weighted avg       0.66      0.66      0.63       395
+
+=========== AUC: 0.6350146077932011
+++++Use densenet model+++
+starting!!!-----------------------------------------------
+Accuracy: 0.8540145985401459
+Sensitivity: 0.8203125
+Specificity: 0.8835616438356164
+Precision: 0.860655737704918
+Ending!!!------------------------------------------------------
+(0.8203125, 0.8835616438356164)
+Loss: InfoNCE_loss class_name PN Accuracy: 0.6860759493670886
+              precision    recall  f1-score   support
+
+           0       0.71      0.83      0.76       156
+           1       0.71      0.72      0.71       146
+           2       0.57      0.40      0.47        93
+
+    accuracy                           0.69       395
+   macro avg       0.66      0.65      0.65       395
+weighted avg       0.68      0.69      0.68       395
+
+=========== AUC: 0.7427978840774048
+++++Use densenet model+++
+starting!!!-----------------------------------------------
+Accuracy: 0.9230769230769231
+Sensitivity: 0.5294117647058824
+Specificity: 0.9823008849557522
+Precision: 0.8181818181818182
+Ending!!!------------------------------------------------------
+(0.5294117647058824, 0.9823008849557522)
+Loss: InfoNCE_loss class_name STR Accuracy: 0.7088607594936709
+              precision    recall  f1-score   support
+
+           0       0.78      0.86      0.82       257
+           1       0.62      0.41      0.49        44
+           2       0.49      0.43      0.46        94
+
+    accuracy                           0.71       395
+   macro avg       0.63      0.57      0.59       395
+weighted avg       0.69      0.71      0.70       395
+
+=========== AUC: 0.679060443083721
+++++Use densenet model+++
+starting!!!-----------------------------------------------
+Accuracy: 0.8928571428571429
+Sensitivity: 0.3137254901960784
+Specificity: 0.987220447284345
+Precision: 0.8
+Ending!!!------------------------------------------------------
+(0.3137254901960784, 0.987220447284345)
+Loss: InfoNCE_loss class_name VS Accuracy: 0.8253164556962025
+              precision    recall  f1-score   support
+
+           0       0.84      0.99      0.90       313
+           1       0.70      0.31      0.43        52
+           2       0.50      0.03      0.06        30
+
+    accuracy                           0.83       395
+   macro avg       0.68      0.44      0.46       395
+weighted avg       0.79      0.83      0.78       395
+
+=========== AUC: 0.5935326266654821

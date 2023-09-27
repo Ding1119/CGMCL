@@ -1,0 +1,18 @@
+++++Use densenet model+++
+starting!!!-----------------------------------------------
+Accuracy: 0.6346153846153846
+Sensitivity: 0.9074074074074074
+Specificity: 0.34
+Precision: 0.5975609756097561
+Ending!!!------------------------------------------------------
+(0.9074074074074074, 0.34)
+Loss: Contrastive_loss class_name DaG Accuracy: 0.6346153846153846
+              precision    recall  f1-score   support
+
+           0       0.77      0.34      0.47        50
+           1       0.60      0.91      0.72        54
+
+    accuracy                           0.63       104
+   macro avg       0.69      0.62      0.60       104
+weighted avg       0.68      0.63      0.60       104
+
