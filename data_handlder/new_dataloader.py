@@ -7,6 +7,7 @@ from sklearn import preprocessing
 from sklearn.neighbors import NearestNeighbors
 import pandas as pd
 from torch_geometric.data import Data
+from sklearn.model_selection import StratifiedKFold
 
 def label_return(dataset_choice, category,label):
     if dataset_choice == 'skin':
@@ -195,11 +196,24 @@ class CustomDataset(Dataset):
         self.data_f = self.load_and_concatenate(self.raw_train_f_paths , self.raw_test_f_paths)
         self.labels = self.load_and_concatenate_label(self.raw_train_label_paths , self.raw_test_label_paths)
         
+        self.adj = self.build_adj(self.data)
+        self.adj_f = self.build_adj(self.data_f)
+  
+
+    def build_adj(self, input_data):
+        input_data = torch.from_numpy(input_data ).float()
+        input_data_flatten = torch.flatten(input_data, start_dim=1)
+  
+        adj = build_knn_graph(input_data_flatten, 300).float()
+
+        return adj
+    
     def load_and_concatenate(self, train_path, test_path):
         data = [np.load(train_path),np.load(test_path)]
 
         # data = [np.load(file_path) for file_path in file_paths]
         return np.concatenate(data, axis=0)
+    
     
     def load_and_concatenate_label(self, train_path, test_path):
         train_df = pd.read_csv(train_path)
@@ -218,8 +232,8 @@ class CustomDataset(Dataset):
 
     def __getitem__(self, idx):
         sample = {
-            'data': self.data[idx],
-            'data_f': self.data[idx],
+            'data': self.adj[idx],
+            'data_f': self.adj_f[idx],
             'label': self.labels[idx]
         }
         return sample
@@ -245,10 +259,9 @@ if __name__ == '__main__':
                                 
     
 
-    # for _ in range(args.repeat):
-    #     seed_everything(random.randint(1, 1000000))  # use random seed for each run
-    #     skf = StratifiedKFold(n_splits=args.k_fold_splits, shuffle=True)
-    #     for train_index, test_index in skf.split(dataset, y):
-    #         train_index = train_index.astype(np.int64)
-    #         test_index = test_index.astype(np.int64) 
-    import pdb;pdb.set_trace()
+    for _ in range(1):
+        # seed_everything(random.randint(1, 1000000))  # use random seed for each run
+        skf = StratifiedKFold(n_splits=5, shuffle=True)
+        for train_index, test_index in skf.split(dataset, y):
+            train_index = train_index.astype(np.int64)
+            test_index = test_index.astype(np.int64) 
