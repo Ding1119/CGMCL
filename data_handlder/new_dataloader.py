@@ -180,6 +180,15 @@ def get_y(dataset: [Data]):
         y.append(d['label'])
     return y
 
+def get_data(dataset: [Data]):
+    """
+    Get the y values from a list of Data objects.
+    """
+    data = []
+    for d in dataset:
+        data.append(d['data'])
+    return data
+
 class CustomDataset(Dataset):
     def __init__(self, raw_train_paths, raw_test_paths,
                  raw_train_f_paths, raw_test_f_paths,
@@ -196,9 +205,9 @@ class CustomDataset(Dataset):
         self.data_f = self.load_and_concatenate(self.raw_train_f_paths , self.raw_test_f_paths)
         self.labels = self.load_and_concatenate_label(self.raw_train_label_paths , self.raw_test_label_paths)
         
-        self.adj = self.build_adj(self.data)
-        self.adj_f = self.build_adj(self.data_f)
-  
+        # self.adj = self.build_adj(self.data)
+        # self.adj_f = self.build_adj(self.data_f)
+
 
     def build_adj(self, input_data):
         input_data = torch.from_numpy(input_data ).float()
@@ -231,9 +240,10 @@ class CustomDataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, idx):
+        
         sample = {
-            'data': self.adj[idx],
-            'data_f': self.adj_f[idx],
+            'data': self.data[idx],
+            'data_f': self.data_f[idx],
             'label': self.labels[idx]
         }
         return sample
@@ -265,3 +275,5 @@ if __name__ == '__main__':
         for train_index, test_index in skf.split(dataset, y):
             train_index = train_index.astype(np.int64)
             test_index = test_index.astype(np.int64) 
+            import pdb;pdb.set_trace()
+#1.9.1+cu102o
