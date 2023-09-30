@@ -10,7 +10,7 @@ from sklearn.metrics import roc_curve,auc
 from scipy import interp
 from sklearn.neighbors import NearestNeighbors
 from itertools import cycle
-from torch_geometric.loader import DataLoader
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 import torch.nn as nn
 import torch.optim as optim
@@ -40,8 +40,10 @@ def train_eval(model_select, loss_select):
 
     raw_train_path = "/home/feng/jeding/PD_contrastive_research_0817/skin_dataset_ok/dermatology_images/train_derm_f_413.npy"
     raw_test_path = "/home/feng/jeding/PD_contrastive_research_0817/skin_dataset_ok/dermatology_images/test_derm_f_395.npy"
-    raw_train_f_path = "/home/feng/jeding/PD_contrastive_research_0817/skin_dataset_ok/clinical_images/train_clinic_f_413.npy"
-    raw_test_f_path = "/home/feng/jeding/PD_contrastive_research_0817/skin_dataset_ok/clinical_images/test_clinic_f_395.npy"
+    
+    raw_train_f_path = "/home/feng/jeding/PD_contrastive_research_0817/skin_dataset_ok/meta_ok/meta_train_413.npy"
+    raw_test_f_path = "/home/feng/jeding/PD_contrastive_research_0817/skin_dataset_ok/meta_ok/meta_test_395.npy"
+    
     raw_train_label_path = '/home/feng/jeding/PD_contrastive_research_0817/skin_dataset_ok/train_labels_df_413.csv'
     raw_test_label_path = '/home/feng/jeding/PD_contrastive_research_0817/skin_dataset_ok/test_labels_df_395.csv'
 
@@ -57,9 +59,10 @@ def train_eval(model_select, loss_select):
 
     dataset = CustomDataset(raw_train_path, raw_test_path, raw_train_f_path, raw_test_f_path,
                                 raw_train_label_path,raw_test_label_path)
-    # import pdb;pdb.set_trace()
+
     y = get_y(dataset)
-    data = get_data(dataset)
+  
+    # data = get_data(dataset)
     # import pdb;pdb.set_trace()
     
     accs, aucs, macros, exp_accs, exp_aucs, exp_macros, f1scores = [], [], [], [], [], [], []
@@ -83,12 +86,28 @@ def train_eval(model_select, loss_select):
             model = Model_SKIN(projection, model_net, 3).to(device)
             optimizer = optim.Adam(model.parameters(), lr=0.001)
             train_set, test_set = dataset[train_index], dataset[test_index]
-
-            train_loader = torch.utils.data.DataLoader(train_set['data'], batch_size=400, shuffle=False)
-            test_loader = torch.utils.data.DataLoader(test_set['data'], batch_size=100, shuffle=False)
             # import pdb;pdb.set_trace()
+            # train_loader = DataLoader(train_set, batch_size=400, shuffle=False)
 
-            test_micro, test_auc, test_macro = train_and_evaluate(model, train_loader, test_loader, 
+            # test_loader = DataLoader(test_set, batch_size=100, shuffle=False)
+            train_loader = torch.from_numpy(train_set['data'])
+            
+            test_loader = torch.from_numpy(test_set['data'])
+
+            train_loader_f = torch.from_numpy(train_set['data_f'])
+            test_loader_f = torch.from_numpy(test_set['data_f'])
+
+            train_label_y = torch.from_numpy(train_set['label'])
+            test_label_y = torch.from_numpy(test_set['label'])
+
+            # train_f_loader = torch.utils.data.DataLoader(train_set['data_f'], batch_size=400, shuffle=False)
+            # test_f_loader = torch.utils.data.DataLoader(test_set['data_f'], batch_size=100, shuffle=False)
+
+
+
+            test_micro, test_auc, test_macro = train_and_evaluate(model, train_loader, test_loader,
+                                                                  train_loader_f, test_loader_f, 
+                                                                  train_label_y, test_label_y,
                                                                   optimizer, device, loss_select)
 
             # logging.info(f'(Initial Performance Last Epoch) | test_micro={(test_micro * 100):.2f}, '

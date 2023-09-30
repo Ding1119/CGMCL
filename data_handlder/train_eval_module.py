@@ -6,96 +6,99 @@ from sklearn import metrics
 from typing import Optional
 from torch.utils.data import DataLoader
 import logging
-# from losses import *
+from losses import *
 from tqdm import tqdm
+from data_handlder.new_dataloader import build_adj
 
 
 
-def train_and_evaluate(model, train_loader, test_loader, optimizer, device, loss_select):
+
+def train_and_evaluate(model, train_loader, test_loader,
+                        train_loader_f, test_loader_f,
+                        train_y, test_y,
+                        optimizer, device, loss_select):
     model.train()
     accs, aucs, macros = [], [], []
     epoch_num = 5
     
     for i in tqdm(range(epoch_num)):
         loss_all = 0
-        for data in train_loader:
-            import pdb;pdb.set_trace()
-            data = data.to(device)
 
-            alpha = 0.4
+        adj_train = build_adj(train_loader, 300)
+        adj_train_f =  build_adj(train_loader_f, 300)
+        
+        optimizer.zero_grad()
+        # import pdb;pdb.set_trace()
+        train_loader=  torch.tensor(train_loader ).float().transpose(1,3).to(device)
+        train_loader_f = train_loader_f.float().to(device)
+        adj_train = adj_train.to(device)
+        adj_train_f = adj_train_f.to(device)
+        train_y = train_y.to(device)
 
+        output1, output2, emb = model(train_loader, train_loader_f, adj_train, adj_train_f)
 
-            class_weights = torch.full((1,3),0.5).view(-1)
-            # criterion1 = WeightedCrossEntropyLoss(weight=class_weights)
-            # optimizer.zero_grad()
-            # out = model(data)
+        n_classes = 3
+        class_weights = torch.full((1, n_classes),0.5).view(-1)
+        criterion1 = WeightedCrossEntropyLoss(weight=class_weights)
+        
+        if loss_select == 'Contrastive_loss':
+         criterion2 = contrastive_loss
+
+        elif loss_select == 'MGEC_loss':
+            criterion2 = MGECLoss()
             
+        elif loss_select == 'InfoNCE_loss':
+            criterion2 = info_loss
+            
+        elif loss_select == 'SAC_loss':
+            criterion2 = SACLoss()
 
-            # if loss_select == 'Contrastive_loss':
-            #     criterion2 = contrastive_loss
+        optimizer.zero_grad()
+        loss_ce1 = criterion1(output1, train_y)
+        loss_ce2 = criterion1(output2, train_y)
+        alpha = 0.4
 
-            # elif loss_select == 'MGEC_loss':
-            #     criterion2 = MGECLoss()
-        
-            # elif loss_select == 'InfoNCE_loss':
-            #     criterion2 = info_loss
-        
-            # elif loss_select == 'SAC_loss':
-            #     criterion2 = SACLoss()
+        if loss_select == 'Contrastive_loss':
+            adj = adj_train +  adj_train_f
+            diag = torch.diag(adj.sum(dim=1))
+            loss_extra = criterion2( emb, adj_train , adj_train_f, train_y, output1, output2, diag).to(device)
+            loss = (1-alpha)*(loss_ce1 + loss_ce2) + alpha* loss_extra
+
+        elif loss_select == 'MGEC_loss':
+            adj = adj_train +  adj_train_f
+            diag = torch.diag(adj.sum(dim=1))
+            loss_extra = criterion2(output1, output2, adj, diag )
+            loss = (1-alpha)*(loss_ce1+loss_ce2) + alpha* loss_extra
+            #loss = loss_extra
+
+        elif loss_select == 'InfoNCE_loss':
+            loss_extra = criterion2( emb, adj_train ,  adj_train_f, train_y)
+            loss = (1-alpha)*(loss_ce1+loss_ce2) + alpha* loss_extra
+
+        elif loss_select == 'SAC_loss':    
+            adj = adj_train +  adj_train_f
+            diag = torch.diag(adj.sum(dim=1))
+            loss_extra = criterion2(emb, adj)
+            loss = (1-alpha)*(loss_ce1+loss_ce2) + alpha* loss_extra
+        elif loss_select == 'only_CE':
+            loss = loss_ce1 + loss_ce2
 
 
-            # if loss_select == 'Contrastive_loss':
-            #     adj = adj_train_img +  adj_f_knn_train
-            #     diag = torch.diag(adj.sum(dim=1))
-            #     loss_extra = criterion2( emb, adj_train_img, adj_f_knn_train, y, output1, output2, diag).to(device)
-            #     loss = (1-alpha)*(loss_ce1 + loss_ce2) + alpha* loss_extra
+        loss.backward()
+        optimizer.step()
 
-            # elif loss_select == 'MGEC_loss':
-            #     adj = adj_train_img +  adj_f_knn_train
-            #     diag = torch.diag(adj.sum(dim=1))
-            #     loss_extra = criterion2(output1, output2, adj, diag )
-            #     loss = (1-alpha)*(loss_ce1+loss_ce2) + alpha* loss_extra
-            # #loss = loss_extra
+        train_micro, train_auc, train_macro = evaluate(model, device, train_loader)
 
-            # elif loss_select == 'InfoNCE_loss':
-            #     loss_extra = criterion2( emb, adj_train_img, adj_f_knn_train, y)
-            #     loss = (1-alpha)*(loss_ce1+loss_ce2) + alpha* loss_extra
+        # test_interval = 5
+        # if (i + 1) % test_interval == 0:
+        #     test_micro, test_auc, test_macro = evaluate(model, device, test_loader)
+        #     accs.append(test_micro)
+        #     aucs.append(test_auc)
+        #     macros.append(test_macro)
+        #     text = f'(Train Epoch {i}), test_micro={(test_micro * 100):.2f}, ' \
+        #            f'test_macro={(test_macro * 100):.2f}, test_auc={(test_auc * 100):.2f}\n'
 
-            # elif loss_select == 'SAC_loss':    
-            #     adj = adj_train_img +  adj_f_knn_train
-            #     diag = torch.diag(adj.sum(dim=1))
-            #     loss_extra = criterion2(emb, adj)
-            #     loss = (1-alpha)*(loss_ce1+loss_ce2) + alpha* loss_extra
-            # elif loss_select == 'only_CE':
-            #     loss = loss_ce1 + loss_ce2
-
-        #     loss.backward()
-        #     optimizer.step()
-
-        #     loss_all += loss.item()
-        # epoch_loss = loss_all / len(train_loader.dataset)
-
-    #     train_micro, train_auc, train_macro = evaluate(model, device, train_loader)
-    #     logging.info(f'(Train) | Epoch={i:03d}, loss={epoch_loss:.4f}, '
-    #                  f'train_micro={(train_micro * 100):.2f}, train_macro={(train_macro * 100):.2f}, '
-    #                  f'train_auc={(train_auc * 100):.2f}')
-
-    #     if (i + 1) % args.test_interval == 0:
-    #         test_micro, test_auc, test_macro = evaluate(model, device, test_loader)
-    #         accs.append(test_micro)
-    #         aucs.append(test_auc)
-    #         macros.append(test_macro)
-    #         text = f'(Train Epoch {i}), test_micro={(test_micro * 100):.2f}, ' \
-    #                f'test_macro={(test_macro * 100):.2f}, test_auc={(test_auc * 100):.2f}\n'
-    #         logging.info(text)
-
-    #     if args.enable_nni:
-    #         nni.report_intermediate_result(train_auc)
-
-    # accs, aucs, macros = np.sort(np.array(accs)), np.sort(np.array(aucs)), np.sort(np.array(macros))
-    # return accs.mean(), aucs.mean(), macros.mean()
-    return test_micro, test_auc, test_macro
-
+        import pdb;pdb.set_trace()
 
 @torch.no_grad()
 def evaluate(model, device, loader, test_loader: Optional[DataLoader] = None) -> (float, float):
