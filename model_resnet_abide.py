@@ -8,7 +8,6 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 import os
 #os.environ['CUDA_LAUNCH_BLOCKING'] = "0"
 
-
 class CNN(nn.Module):
     def __init__(self):
         super(CNN, self).__init__()
@@ -29,6 +28,27 @@ class CNN(nn.Module):
         x = F.relu(self.fc2(x))
         x = F.relu(self.fc3(x))
         x = F.relu(self.fc4(x))
+        return x
+
+
+class Autoencoder(nn.Module):
+    def __init__(self, input_dim, encoding_dim):
+        super(Autoencoder, self).__init__()
+        self.encoder = nn.Sequential(
+            nn.Linear(input_dim, 512),
+            nn.ReLU(),
+            nn.Linear(512, encoding_dim)
+        )
+        self.decoder = nn.Sequential(
+            nn.Linear(encoding_dim, 512),
+            nn.ReLU(),
+            nn.Linear(512, input_dim),
+            nn.Sigmoid()  # 如果输入数据在[0,1]范围内，请使用Sigmoid作为输出激活函数
+        )
+
+    def forward(self, x):
+        x = self.encoder(x)
+        # x = self.decoder(x)
         return x
     
 class GraphConvolution_img(nn.Module):
@@ -195,11 +215,14 @@ class Model_ABIDE(nn.Module):
         #self.gat_img = GAT_img(1024,256,3)
         self.gat_img = GAT_img(1024,256,2)
         self.gat_f = GAT_f(14,5,2)
+        
         self.projection = projection
    
         # self.linear_vgg1 = nn.Linear(65536, 1024)
         # self.linear_vgg2 = nn.Linear(1024, 256)
         self.linear1 = nn.Linear(19900, 2024)
+        self.autoencoder = Autoencoder(19900,2024)
+        # self.linear1_1 = nn.Linear(6090, 2024)
         self.linear2 = nn.Linear(2024, 1024)
         self.linear3 = nn.Linear(1028, 256)
         self.linear4 = nn.Linear(256,self.n_classes)
@@ -214,9 +237,15 @@ class Model_ABIDE(nn.Module):
         # x = self.encoder(x) #torch.Size([300, 65536])
         
         x_encoder = x
+     
+
         
-        x_encoder = self.linear1(x_encoder)
+        # x_encoder = self.linear1(x_encoder)
         
+        # x_encoder = self.linear2(x_encoder)
+        x_encoder = self.autoencoder(x_encoder)
+        # x_encoder = self.linear1(x_encoder)
+        # import pdb;pdb.set_trace()
         x_encoder = self.linear2(x_encoder)
         # x_encoder = self.input_resnet(x)
         
