@@ -1,7 +1,7 @@
 DIR=logs/abide_logs
-model_select='densenet'
+model_select='resnet_18'
 losses_select='Contrastive_loss'
-dataset_choice='abide'
+dataset_choice='pd'
 image_type='dermatology_images'
 for i in DaG
 do
@@ -12,5 +12,5 @@ do
     --dataset_choice ${dataset_choice} \
     --category ${i} \
     --n_epoch 300 \
-     --n_classes 2 #>> S${DIR}/abide_${model_select}_${losses_select}_GCN_logs_v3.txt
+     --n_classes 3 #>> S${DIR}/abide_${model_select}_${losses_select}_GCN_logs_v3.txt
 done

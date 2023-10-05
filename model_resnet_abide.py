@@ -58,7 +58,7 @@ class GraphConvolution_img(nn.Module):
         # self.linear2 = nn.Linear( 65536, 12)
         self.linear2 = nn.Linear(1024, 256)
         self.linear3 = nn.Linear(256, 128)
-        self.linear4 = nn.Linear(128, 3)
+        self.linear4 = nn.Linear(128, 2)
         self.sigmoid = nn.Sigmoid()
         
 
@@ -80,7 +80,7 @@ class GraphConvolution_f(nn.Module):
         self.linear1 = nn.Linear(in_features, out_features)
         # self.linear2 = nn.Linear( 65536, 12)
         self.linear2 = nn.Linear(256, 8)
-        self.linear3 = nn.Linear(8, 3)
+        self.linear3 = nn.Linear(14, 2)
         self.sigmoid = nn.Sigmoid()
         
 
@@ -209,7 +209,7 @@ class Model_ABIDE(nn.Module):
         # self.cnn_encoder = DeepEncoder() #torch.Size([300, 3, 64, 64])
         # self.cnn_encoder = CNNEncoder()
         # self.vgg_encoder = nn.Sequential(*list(vgg16.features.children()))
-        self.gcn_img = GraphConvolution_img(64, 3)
+        self.gcn_img = GraphConvolution_img(1024, 2)
         #self.gcn_f = GraphConvolution_f(12, 3)
         self.gcn_f = GraphConvolution_f(14, 2)
         #self.gat_img = GAT_img(1024,256,3)
@@ -260,13 +260,13 @@ class Model_ABIDE(nn.Module):
         # import pdb;pdb.set_trace()
         
         x_gat_f = self.gat_f(x_f, adjacency_img)
-        #import pdb;pdb.set_trace()
-        #x_gcn_f = self.gcn_f(x_f, adjacency_f)
+        # import pdb;pdb.set_trace()
+        # x_gcn_f = self.gcn_f(x_f, adjacency_img)
         #import pdb;pdb.set_trace()
         # kmeans_output_f = self.kmeans.fit_transform(x_gcn_f.detach().numpy())
         # kmeans_tensor_f = torch.from_numpy(kmeans_output_f).float().to(x_gcn_f.device)
         
-        #x_gcn_img = self.gcn_img(x_encoder, adjacency_img)
+        # x_gcn_img = self.gcn_img(x_encoder, adjacency_img)
         # kmeans_output_img = self.kmeans.fit_transform(x_gcn_img.detach().numpy())
         # kmeans_tensor_img = torch.from_numpy(kmeans_output_img).float().to(x_gcn_img.device)
 
@@ -275,11 +275,12 @@ class Model_ABIDE(nn.Module):
        
         
         w_att_f = self.attention_f(x_f_fusion)
-        
+        # import pdb;pdb.set_trace()
         w_att_img = self.attention_img(x_img)
-        
+        # import pdb;pdb.set_trace()
         attended_gat_f = x_gat_f * w_att_f
         attended_gat_img = x_gat_img * w_att_img
+        
         x_f_att = torch.cat((x_f_fusion, attended_gat_f), 1) # torch.Size([300, 17])
         x_img_att = torch.cat((x_img, attended_gat_img), 1) # torch.Size([300, 1029])
         

@@ -27,7 +27,8 @@ from model_resnet_abide import Projection, Model_ABIDE, CNN
 from data_handlder.train_eval_module import train_and_evaluate
 # from losses import WeightedCrossEntropyLoss, contrastive_loss, info_loss, MGECLoss, SACLoss
 import argparse
-
+import datetime
+from typing import List
 from data_handlder.new_dataloader import CustomDataset, get_y, get_data
 
 import logging
@@ -104,14 +105,38 @@ def train_eval(model_select, loss_select):
             # test_f_loader = torch.utils.data.DataLoader(test_set['data_f'], batch_size=100, shuffle=False)
 
 
-
-            test_micro, test_auc, test_macro = train_and_evaluate(model, train_loader, test_loader,
-                                                                  train_loader_f, test_loader_f, 
-                                                                  train_label_y, test_label_y,
+            # train
+            train_micro, train_macro, accuracy = train_and_evaluate(model, train_loader, test_loader,
+                                                                   train_loader_f, test_loader_f, 
+                                                                    train_label_y, test_label_y,
                                                                   optimizer, device, loss_select)
+            
 
-            # logging.info(f'(Initial Performance Last Epoch) | test_micro={(test_micro * 100):.2f}, '
-            #              f'test_macro={(test_macro * 100):.2f}, test_auc={(test_auc * 100):.2f}')
+        
+
+            
+            logging.info(f'(Initial Performance Last Epoch) | train_micro={(train_micro * 100):.2f}, '
+                            f'train_macro={(train_macro * 100):.2f}, train acc={(accuracy * 100):.2f}')
+
+            accs.append(accuracy)
+            macros.append(train_macro)
+        
+        now = datetime.datetime.now()
+        current_time = now.strftime("%Y-%n-%d %H:%M:%S")
+
+        result_str = f'({current_time} K Fold Final Result)|Use model:{model_select}| avg_acc={(np.mean(accs) * 100):.2f} +- {(np.std(accs) * 100): .1f}\n'
+
+        logging.info(result_str)
+
+        # with open('result_contrastive_log', 'a') as f:
+        #     # write all input arguments to f
+        #     input_arguments: List[str] = sys.argv
+        #     f.write(f'{input_arguments}\n')
+        #     f.write(result_str + '\n')
+        # if args.enable_nni:
+        #     nni.report_final_result(np.mean(aucs))
+   
+
 
 def main():
     parser = argparse.ArgumentParser()

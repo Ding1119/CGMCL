@@ -1,0 +1,38 @@
+++++Use resnet_18 model+++
+starting!!!-----------------------------------------------
+Accuracy: 0.5961538461538461
+Sensitivity: 0.5185185185185185
+Specificity: 0.68
+Precision: 0.6363636363636364
+Ending!!!------------------------------------------------------
+(0.5185185185185185, 0.68)
+Loss: Contrastive_loss class_name DaG Accuracy: 0.5961538461538461
+              precision    recall  f1-score   support
+
+           0       0.57      0.68      0.62        50
+           1       0.64      0.52      0.57        54
+
+    accuracy                           0.60       104
+   macro avg       0.60      0.60      0.59       104
+weighted avg       0.60      0.60      0.59       104
+
+acc: 0.5961538461538461 precision: 0.6363636363636364 recall: 0.5185185185185185 fscore: 0.5714285714285714 sensitivity: 0.5185185185185185 specificity: 0.68
+++++Use resnet_18 model+++
+starting!!!-----------------------------------------------
+Accuracy: 0.6923076923076923
+Sensitivity: 0.7962962962962963
+Specificity: 0.58
+Precision: 0.671875
+Ending!!!------------------------------------------------------
+(0.7962962962962963, 0.58)
+Loss: Contrastive_loss class_name DaG Accuracy: 0.6923076923076923
+              precision    recall  f1-score   support
+
+           0       0.72      0.58      0.64        50
+           1       0.67      0.80      0.73        54
+
+    accuracy                           0.69       104
+   macro avg       0.70      0.69      0.69       104
+weighted avg       0.70      0.69      0.69       104
+
+acc: 0.6923076923076923 precision: 0.671875 recall: 0.7962962962962963 fscore: 0.7288135593220338 sensitivity: 0.7962962962962963 specificity: 0.58 nmi 0.11297218364168422

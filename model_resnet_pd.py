@@ -59,8 +59,8 @@ class GraphConvolution_f(nn.Module):
         super(GraphConvolution_f, self).__init__()
         self.linear1 = nn.Linear(in_features, out_features)
         # self.linear2 = nn.Linear( 65536, 12)
-        self.linear2 = nn.Linear(256, 8)
-        self.linear3 = nn.Linear(8, 3)
+        self.linear2 = nn.Linear(256, 12)
+        self.linear3 = nn.Linear(12, 3)
         self.sigmoid = nn.Sigmoid()
         
 
@@ -178,9 +178,9 @@ class GAT_f(nn.Module):
         logits = self.attention2(h, adj)
         return logits
     
-class Model(nn.Module):
+class Model_PD(nn.Module):
     def __init__(self, projection, input_resnet, n_classes):
-        super(Model, self).__init__()
+        super(Model_PD, self).__init__()
         #self.encoder = CNNEncoder()
         self.cnn_encoder = CNN()
         self.input_resnet = input_resnet
@@ -192,7 +192,7 @@ class Model(nn.Module):
         self.gcn_img = GraphConvolution_img(64, 3)
         self.gcn_f = GraphConvolution_f(12, 3)
         self.gat_img = GAT_img(1024,256,3)
-        self.gat_f = GAT_f(8,5,3)
+        self.gat_f = GAT_f(12,5,3)
         self.projection = projection
    
         # self.linear_vgg1 = nn.Linear(65536, 1024)
@@ -201,8 +201,8 @@ class Model(nn.Module):
         self.linear2 = nn.Linear(256, 2)
         self.linear3 = nn.Linear(1030, 256)
         self.linear4 = nn.Linear(256,self.n_classes)
-        self.linear_f = nn.Linear(14,self.n_classes)
-        self.attention_f = AttentionNetwork_f(11)
+        self.linear_f = nn.Linear(18,self.n_classes)
+        self.attention_f = AttentionNetwork_f(15)
         self.attention_img = AttentionNetwork_img(1027)
         self.sigmoid = nn.Sigmoid()
         self.softmax = nn.Softmax(dim=1)
@@ -210,8 +210,9 @@ class Model(nn.Module):
     def forward(self, x, x_f,adjacency_img, adjacency_f):
         # import pdb;pdb.set_trace()
         # x = self.encoder(x) #torch.Size([300, 65536])
-        
-        x_encoder = self.input_resnet(x)
+        # import pdb;pdb.set_trace()
+        # import pdb;pdb.set_trace()
+        x_encoder = self.cnn_encoder(x)
         
         #x_encoder = self.cnn_encoder(x)
         
@@ -222,7 +223,7 @@ class Model(nn.Module):
         # x_encoder = self.linear_vgg2(x_encoder)
         # import pdb;pdb.set_trace()
         # import pdb;pdb.set_trace()
-         
+        # import pdb;pdb.set_trace()
         x_gat_f = self.gat_f(x_f, adjacency_img)
         # import pdb;pdb.set_trace()
         x_gcn_f = self.gcn_f(x_f, adjacency_f)
@@ -266,9 +267,7 @@ class Model(nn.Module):
         z = emb1 + emb2
         
         #import pdb;pdb.set_trace()
-        z = self.kmeans.fit_transform(z.cpu().data)
-        #emb2 = self.kmeans.fit_transform(emb2.cpu().data)
-        z =  torch.from_numpy(z)
+       
         #emb2 =  torch.from_numpy(emb2).to(torch.float32).to(device)
         #import pdb;pdb.set_trace()
 

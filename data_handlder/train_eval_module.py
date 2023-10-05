@@ -21,7 +21,7 @@ def train_and_evaluate(model, train_loader, test_loader,
                         optimizer, device, loss_select):
     model.train()
     accs, aucs, macros = [], [], []
-    epoch_num = 3
+    epoch_num = 10
     
     for i in tqdm(range(epoch_num)):
         optimizer.zero_grad()
@@ -102,26 +102,41 @@ def train_and_evaluate(model, train_loader, test_loader,
         adj_test = build_adj_test(test_loader.cpu().detach().numpy(), 120)
         adj_test_f =  build_adj_test(test_loader_f.cpu().detach().numpy(), 120)
     
-        test_loader=  torch.tensor(test_loader ).float().transpose(1,3).to(device)
+        test_loader_eval =  torch.tensor(test_loader ).float().transpose(1,3).to(device)
         test_loader_f = test_loader_f.float().to(device)
 
         adj_test = adj_test.to(device)
         adj_test_f = adj_test_f.to(device)
         test_y = test_y.to(device)
         
-        for j in range(5):
-            
-            print("===",j,"====",adj_test.shape, adj_test_f.shape, test_loader.shape, test_loader_f.shape)
-            test_micro, test_auc, test_macro = evaluate(model, device, test_loader, test_loader_f, adj_test, adj_test_f, test_y)
+        cv_eval = "false"
         
-        #     accs.append(test_micro)
+        if cv_eval == 'true':
+        
+            for j in range(5):
+                
+                print("===",j,"====",adj_test.shape, adj_test_f.shape, test_loader_eval.shape, test_loader_f.shape)
+                test_micro, test_auc, test_macro = evaluate(model, device, test_loader_eval, test_loader_f, adj_test, adj_test_f, test_y)
+            
+                accs.append(test_micro)
+        
+                macros.append(test_macro)
+                text = f'(Train Epoch {i}), test_micro={(test_micro * 100):.2f}, ' \
+                    f'test_macro={(test_macro * 100):.2f}, test_auc={(test_auc * 100):.2f}\n'
+                
+                logging.info(text)
+        else:
+            test_micro, test_auc, test_macro = evaluate(model, device, test_loader_eval, test_loader_f, adj_test, adj_test_f, test_y)
+            
+            accs.append(test_micro)
     
-        #     macros.append(test_macro)
-        #     text = f'(Train Epoch {i}), test_micro={(test_micro * 100):.2f}, ' \
-        #            f'test_macro={(test_macro * 100):.2f}, test_auc={(test_auc * 100):.2f}\n'
+            macros.append(test_macro)
+            text = f'(Train Epoch {i}), test_micro={(test_micro * 100):.2f}, ' \
+                f'test_macro={(test_macro * 100):.2f}, test_auc={(test_auc * 100):.2f}\n'
             
-        #     logging.info(text)
-        
+            logging.info(text)
+
+            
     return train_micro, train_macro, accuracy 
 
    

@@ -37,6 +37,7 @@ def build_knn_graph(input_data, k):
     knn = NearestNeighbors(n_neighbors=k)
     knn.fit(input_data)
     _, indices = knn.kneighbors(input_data)
+
     adjacency_matrix = torch.zeros(input_data.shape[0], input_data.shape[0])
     for i, neighbors in enumerate(indices):
         adjacency_matrix[i, neighbors] = 1
@@ -189,6 +190,27 @@ def get_data(dataset: [Data]):
         data.append(d['data'])
     return data
 
+def build_adj(input_data, k):
+        # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        input_data = input_data
+        
+        input_data_flatten = torch.flatten(input_data, start_dim=1)
+        
+        adj = build_knn_graph(input_data_flatten, k)
+ 
+        return adj
+
+def build_adj_test(input_data, k):
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        input_data = torch.tensor(input_data)
+        
+        input_data_flatten = torch.flatten(input_data, start_dim=1)
+        
+        adj = build_knn_graph(input_data_flatten, k)
+        adj = adj.to(device)
+       
+        return adj
+
 class CustomDataset(Dataset):
     def __init__(self, raw_train_paths, raw_test_paths,
                  raw_train_f_paths, raw_test_f_paths,
@@ -209,13 +231,13 @@ class CustomDataset(Dataset):
         # self.adj_f = self.build_adj(self.data_f)
 
 
-    def build_adj(self, input_data):
-        input_data = torch.from_numpy(input_data ).float()
-        input_data_flatten = torch.flatten(input_data, start_dim=1)
+    # def build_adj(self, input_data):
+    #     input_data = torch.from_numpy(input_data ).float()
+    #     input_data_flatten = torch.flatten(input_data, start_dim=1)
   
-        adj = build_knn_graph(input_data_flatten, 300).float()
+    #     adj = build_knn_graph(input_data_flatten, 300).float()
 
-        return adj
+    #     return adj
     
     def load_and_concatenate(self, train_path, test_path):
         data = [np.load(train_path),np.load(test_path)]
@@ -238,16 +260,39 @@ class CustomDataset(Dataset):
 
     def __len__(self):
         return len(self.data)
+    
+    # def __getitem__(self, idx):
+    #     raw_data = self.data[idx]
+    #     data_f = self.data_f[idx]
+    #     label = self.labels[idx]
+
+    #     data = {}
+    #     data["data"] = raw_data
+    #     data["data_f"] = data_f
+    #     data["label"] = label
+
+
+    #     return data
+
 
     def __getitem__(self, idx):
+        # data = self.data[idx]
+        # data_f = self.data_f
+        # # data_f = torch.from_numpy(data_f)
+        # # desired_shape = (data_f.size()[0], 1, 1, data_f.size()[1])
         
+        # # data_f = data_f.view(desired_shape)[idx]
+
+
+        # label = self.labels[idx]
+
         sample = {
             'data': self.data[idx],
             'data_f': self.data_f[idx],
             'label': self.labels[idx]
         }
+        # return self.data[idx], self.data_f[idx],  self.labels[idx]
         return sample
-
 
 if __name__ == '__main__':
     # raw_data_path = '/home/feng/jeding/PD_contrastive_research_0817/skin_dataset_ok/'

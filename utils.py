@@ -6,23 +6,68 @@ import matplotlib.pyplot as plt
 from sklearn.neighbors import NearestNeighbors
 import pandas as pd
 import numpy as np
+from sklearn import metrics
 import torch
 from itertools import cycle
+import torch
+import torch
+from sklearn.metrics.cluster import normalized_mutual_info_score
+from sklearn.metrics import adjusted_rand_score
+# 转换聚类标签为PyTorch张量
+
+
+
+
+
+def run_eval(y_test, pred_y):
+
+  
+    # import pdb;pdb.set_trace()
+    [[TN, FP], [FN, TP]] = confusion_matrix(y_test, pred_y).astype(float)
+    
+    accuracy = (TP + TN) / (TP + TN + FP + FN)
+    specificity = TN / (FP + TN)
+    precision = TP / (TP + FP)
+    sensivity = recall = TP / (TP + FN)
+    fscore = 2 * TP / (2 * TP + FP + FN)
+
+    cluster_labels_true = torch.tensor(y_test)
+    cluster_labels_pred = torch.tensor(pred_y)
+
+    # 使用sklearn.metrics.cluster中的normalized_mutual_info_score计算NMI
+    nmi = normalized_mutual_info_score(cluster_labels_true, cluster_labels_pred)
+
+
+    # 假设有两个聚类结果的标签 true_labels 和 predicted_labels
+
+    # 转换为PyTorch张量
+    true_labels = torch.tensor(y_test)
+    predicted_labels = torch.tensor(pred_y)
+    import pdb;pdb.set_trace()
+    # 使用sklearn.metrics中的adjusted_rand_score计算ARI
+    ari = adjusted_rand_score(true_labels, predicted_labels)
+
+    print("ARI:", ari)
+
+    # print("NMI:", nmi)
+
+    return [accuracy, precision, recall, fscore, sensivity, specificity, nmi, ari]
 
 def label_return(dataset_choice, category,label):
     if dataset_choice == 'skin':
         if label == 'train':
             
-            raw_train_label = pd.read_csv('/home/feng/jeding/PD_contrastive_research_0817/skin_dataset_ok/train_labels_df_413.csv') 
+            raw_train_label = pd.read_csv('/home/jding/Documents/PD_contrastive_research_0817/skin_dataset_ok/train_labels_df_413.csv') 
             
             return np.array(raw_train_label[f'{category}'])
         else:
 
-            raw_test_label = pd.read_csv('/home/feng/jeding/PD_contrastive_research_0817/skin_dataset_ok/test_labels_df_395.csv')
+            raw_test_label = pd.read_csv('/home/jding/Documents/PD_contrastive_research_0817/skin_dataset_ok/test_labels_df_395.csv')
             
             return np.array(raw_test_label[f'{category}'])
         
     elif dataset_choice == 'abide':
+        
         if label == 'train':
 
             raw_train_label = np.load('/home/feng/jeding/PD_contrastive_research_0817/data_storage/y_train.npy') 
@@ -30,6 +75,24 @@ def label_return(dataset_choice, category,label):
             return raw_train_label
         else:
             raw_test_label = np.load('/home/feng/jeding/PD_contrastive_research_0817/data_storage/y_test.npy') 
+            
+            return raw_test_label
+        
+    elif dataset_choice == 'pd':
+        path_meta = '/home/jding/Documents/PD_contrastive_research_0817/spect_513_data' + '/' 
+        raw_meta = pd.read_csv(path_meta  + 'label_513.csv') 
+        label_630_id = raw_meta[raw_meta['ID'] < 634]
+
+        label_3 = label_630_id['Lebel_3'].values
+        label_2 = label_630_id['Label_2'].values
+
+        if label == 'train':
+
+            raw_train_label = label_3[0:300]
+            
+            return raw_train_label
+        else:
+            raw_test_label = label_3[300:]
             
             return raw_test_label
 
@@ -156,6 +219,36 @@ def print_auc(model_pred, y_test, n_classes ,name, image_type, loss_select):
     tpr["macro"] = mean_tpr
     roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
     print("=========== AUC:", roc_auc["macro"])
+
+
+@torch.no_grad()
+def evaluate(model, device,pred, y_test) -> (float, float):
+    model.eval()
+    preds, trues, preds_prob = [], [], []
+
+    # correct, auc = 0, 0
+    # for data in loader:
+    #     data = data.to(device)
+    #     c = model(data)
+
+    #     pred = c.max(dim=1)[1]
+    #     preds += pred.detach().cpu().tolist()
+    #     preds_prob += torch.exp(c)[:, 1].detach().cpu().tolist()
+    #     trues += data.y.detach().cpu().tolist()
+    y_test = y_test.cpu().detach().numpy()
+    pred = pred.cpu().detach().numpy()
+    train_auc = metrics.roc_auc_score(y_test, pred)
+
+    if np.isnan(auc):
+        train_auc = 0.5
+    train_micro = metrics.f1_score(y_test, pred, average='micro')
+    train_macro = metrics.f1_score(y_test, pred, average='macro', labels=[0, 1, 3])
+
+    # if test_loader is not None:
+    #     test_micro, test_auc, test_macro = evaluate(model, device, test_loader)
+    #     return train_micro, train_auc, train_macro, test_micro, test_auc, test_macro
+    # else:
+    return train_micro, train_auc, train_macro
 
 
 

@@ -16,21 +16,23 @@ import torch.nn.functional as F
 from torch.nn.modules.linear import Linear
 from sklearn.cluster import KMeans
 import torchvision.models as models
-from skimage import data_dir,io,color
 from torch.autograd import Variable
 from sklearn.metrics import classification_report
 from sklearn import preprocessing
-from utils import build_knn_graph, label_return, plot_auc, print_auc, calculate_metrics_new
-from model_resnet import Projection, Model, CNN
+from utils import build_knn_graph, label_return, plot_auc, print_auc, calculate_metrics_new, run_eval
+from model_resnet_skin import Projection, Model_SKIN, CNN
+from model_resnet_abide import Projection, Model_ABIDE, CNN
+from model_resnet_pd import Projection, Model_PD, CNN
 from losses import WeightedCrossEntropyLoss, contrastive_loss, info_loss, MGECLoss, SACLoss
 import argparse
 from data_handlder.load_dataset import dataloader
 import os
 # os.environ['CUDA_LAUNCH_BLOCKING'] = "0"
 
-def train_eval(datadir,skin_type, metadir, loss_select, model_select ,classes, epoch, n_classes):
+
+def train_eval(datadir,skin_type, loss_select, model_select , dataset_choice ,category, epoch, n_classes):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")   
-    
+    torch.cuda.is_available()
     if model_select == 'resnet_18':
         model_net = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1)
         # resnet = models.resnet18(pretrained=True)
@@ -47,18 +49,23 @@ def train_eval(datadir,skin_type, metadir, loss_select, model_select ,classes, e
     # 将最后一层的输出维度修改为类别数目
     num_classes = 1024
     
-    # num_features = model_net.fc.in_features #512
-    num_features = model_net.classifier.in_features
+    num_features = model_net.fc.in_features #512 # Resnet
+    # num_features = model_net.classifier.in_features # Desnet101
     # import pdb;pdb.set_trace()
-    # model_net.fc = nn.Linear(num_features, num_classes)
-    # model_net.fc = model_net.fc.to(device)
-    model_net.classifier = nn.Linear(num_features, num_classes)
-    # import pdb;pdb.set_trace()
-    image_data_train, feature_data_train, adj_train_img, adj_f_knn_train, image_data_test, test_feature_data, adj_test_img, adj_f_knn_test = dataloader(datadir,skin_type, metadir)
+    model_net.fc = nn.Linear(num_features, num_classes) #512 # Resnet
+    # model_net.fc = model_net.fc.to(device) #512 # Resnet
+    model_net.classifier = nn.Linear(num_features, num_classes) #desnet
+
+    image_data_train, feature_data_train, adj_train_img, adj_f_knn_train, image_data_test, test_feature_data, adj_test_img, adj_f_knn_test = dataloader(datadir,skin_type)
 
     projection = Projection(262, 3)
-    model = Model(projection, model_net, n_classes).to(device)
-    
+    if datadir == 'skin':
+        model = Model_SKIN(projection, model_net, n_classes).to(device)
+    elif datadir == 'abide':
+        model = Model_ABIDE(projection, model_net, n_classes).to(device)
+    elif datadir == 'pd':
+        model = Model_PD(projection, model_net, n_classes).to(device)
+
     class_weights = torch.full((1,n_classes),0.5).view(-1)
     criterion1 = WeightedCrossEntropyLoss(weight=class_weights)
 
@@ -74,10 +81,9 @@ def train_eval(datadir,skin_type, metadir, loss_select, model_select ,classes, e
     elif loss_select == 'SAC_loss':
         criterion2 = SACLoss()
 
-
     # criterion3 = loss_dependence
     optimizer = optim.Adam(model.parameters(), lr=0.001)
-    class_name = classes
+    class_name = category
     n_epochs = epoch
 
     training_range = tqdm(range(n_epochs))
@@ -91,11 +97,10 @@ def train_eval(datadir,skin_type, metadir, loss_select, model_select ,classes, e
         feature_data_train = feature_data_train.to(device)
         adj_train_img = adj_train_img.to(device)
         adj_f_knn_train = adj_f_knn_train.to(device)
-        
-        
+
         output1, output2, emb = model(image_data_train , feature_data_train,adj_train_img, adj_f_knn_train)
          
-        y = torch.tensor(label_return(class_name, "train")).to(device)
+        y = torch.tensor(label_return(dataset_choice, class_name, "train")).to(device)
         
         loss_ce1 = criterion1(output1, y)
         loss_ce2 = criterion1(output2, y)
@@ -165,34 +170,38 @@ def train_eval(datadir,skin_type, metadir, loss_select, model_select ,classes, e
         
         # y_test = torch.empty(100).random_(2)
     #     y_test = torch.tensor(label_3_test).to(device)
-        y_test = torch.from_numpy(label_return(class_name, "test")).to(device)
+        y_test = torch.from_numpy(label_return(dataset_choice ,class_name, "test")).to(device)
 
-        
+        # import pdb;pdb.set_trace()
         correct = (pred  == y_test).sum().item()
         accuracy = correct / len(y_test)
+        
         
         # import pdb;pdb.set_trace()
         print(f"++++Use {model_select} model+++")
         print(calculate_metrics_new(y_test.cpu().detach().numpy(), pred.cpu().detach().numpy() ))
         print("Loss:", loss_select, "class_name",class_name,"Accuracy:", accuracy)
         print(classification_report(y_test.cpu().detach().numpy(), pred.cpu().detach().numpy() ))
-        
-        # plot_ROC(pred.cpu().detach().numpy() , y_test.cpu().detach().numpy(), 3, classes, skin_type, loss_select)
-        print_auc(pred.cpu().detach().numpy() , y_test.cpu().detach().numpy(), 3, classes, skin_type, loss_select)
+        if datadir == 'abide':
+            accuracy, precision, recall, fscore, sensivity, specificity, nmi, ari = run_eval(y_test.cpu().detach().numpy(), pred.cpu().detach().numpy())
+            print("acc:",accuracy, "precision:", precision,"recall:", recall,"fscore:", fscore,"sensitivity:", sensivity,"specificity:", specificity, "nmi", nmi, "ari", ari)
+            # plot_ROC(pred.cpu().detach().numpy() , y_test.cpu().detach().numpy(), 3, classes, skin_type, loss_select)
+            # print_auc(pred.cpu().detach().numpy() , y_test.cpu().detach().numpy(), 3, category, skin_type, loss_select)
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--img_data_dir', type=str, default='abide')
+    parser.add_argument('--img_data_dir', type=str)
     parser.add_argument('--skin_type', type=str)
-    parser.add_argument('--meta_data_dir', type=str, default='/home/feng/jeding/PD_contrastive_research_0817/meta_ok/')
+    #parser.add_argument('--meta_data_dir', type=str, default='/home/feng/jeding/PD_contrastive_research_0817/meta_ok/')
     parser.add_argument('--model_select', type=str)
     parser.add_argument('--losses_choice', type=str)
-    parser.add_argument('--classes', type=str)
+    parser.add_argument('--dataset_choice', type=str)
+    parser.add_argument('--category', type=str)
     parser.add_argument('--n_epoch', type=int)
     parser.add_argument('--n_classes', type=int)
     
     args = parser.parse_args()
-    train_eval(args.img_data_dir, args.skin_type, args.meta_data_dir, args.losses_choice, args.model_select,args.classes, args.n_epoch, args.n_classes)
+    train_eval(args.img_data_dir, args.skin_type, args.losses_choice, args.model_select, args.dataset_choice,args.category, args.n_epoch, args.n_classes)
 
 
 if __name__ == '__main__':

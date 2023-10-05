@@ -212,7 +212,7 @@ class Model_SKIN(nn.Module):
         # x = self.encoder(x) #torch.Size([300, 65536])
         
         x_encoder = self.input_resnet(x)
-        
+        # import pdb;pdb.set_trace()
         #x_encoder = self.cnn_encoder(x)
         
         x_gat_img = self.gat_img(x_encoder, adjacency_img)
@@ -222,7 +222,7 @@ class Model_SKIN(nn.Module):
         # x_encoder = self.linear_vgg2(x_encoder)
         # import pdb;pdb.set_trace()
         # import pdb;pdb.set_trace()
-         
+        
         x_gat_f = self.gat_f(x_f, adjacency_img)
         # import pdb;pdb.set_trace()
         x_gcn_f = self.gcn_f(x_f, adjacency_f)

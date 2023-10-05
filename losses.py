@@ -32,6 +32,9 @@ def contrastive_loss(emb, adj1, adj2, label, emb1, emb2, diag):
     positive_pairs = positive_pairs.to(device)
     negative_pairs = similarity_matrix * ((1- adj1) + (1-adj2)) 
     negative_pairs = negative_pairs.to(device)
+    
+    
+    
     # import pdb;pdb.set_trace()
     # positive_pairs = torch.mm(similarity_matrix, adj1.to(torch.float32))
     # negative_pairs = torch.mm(similarity_matrix, (1-adj2).to(torch.float32))
@@ -39,15 +42,20 @@ def contrastive_loss(emb, adj1, adj2, label, emb1, emb2, diag):
     # positive_loss = torch.sum(torch.mm((1- positive_pairs), label.to(torch.float32)))
     # negative_loss = torch.sum(torch.mm(torch.clamp(negative_pairs - margin, min=0) ** 2, (1 - label.to(torch.float32))) )
 
-
+    
  
     # positive_loss = torch.sum((1 - positive_pairs) ** 2 )
     # negative_loss = torch.sum(torch.clamp(negative_pairs - margin, min=0) ** 2 )
 
-    positive_loss = torch.sum( torch.matmul((1- positive_pairs), label.to(torch.float32)))
-    negative_loss = torch.sum( torch.matmul(torch.clamp(negative_pairs - margin, min=0) ** 2, (1 - label.to(torch.float32))) )
-
     
+
+    positive_sum = torch.sum(torch.matmul((positive_pairs), label.to(torch.float32)))
+    negative_sum = torch.sum( torch.matmul(torch.clamp(negative_pairs - margin, min=0) ** 2, (1 - label.to(torch.float32)))) 
+    
+    
+    
+    positive_loss = -torch.log(positive_sum  * (positive_sum **(-1)) + 1e-8).mean()
+    negative_loss = -torch.log(negative_sum  * (negative_sum **(-1)) + 1e-8).mean()
     # similarity_matrix_sum = torch.sum(similarity_matrix, 1, keepdim=True)
     # positive_pairs = torch.sum(similarity_matrix * label, 1)
 
@@ -57,9 +65,10 @@ def contrastive_loss(emb, adj1, adj2, label, emb1, emb2, diag):
     # loss = torch.sum((1 - positive_pairs) ** 2) + torch.sum(torch.clamp(negative_pairs - margin, min=0) ** 2  + 1e-8)
     # loss = torch.mean((1 - positive_pairs) ** 2) + torch.sum(torch.clamp(negative_pairs - margin, min=0) ** 2)
     # import pdb;pdb.set_trace()
-
-    penalty_term = torch.sum(similarity_matrix)
-    penalty_term = torch.mean(torch.sum(torch.exp(negative_pairs) / torch.sum(torch.exp(negative_pairs), dim=1, keepdim=True), dim=1))
+    similarity_matrix = torch.exp(similarity_matrix / margin)
+    similarity_matrix_sum = torch.sum(similarity_matrix, 1, keepdim=True)
+    # penalty_term = torch.sum(similarity_matrix)
+    penalty_term = torch.mean(torch.sum(torch.exp(positive_pairs) / torch.sum(torch.exp(negative_pairs), dim=1, keepdim=True), dim=1))
     penalty_coeff = 0.001
     # loss = positive_loss + negative_loss 
     diagonal_loss = mse_loss(torch.matmul(emb1, emb2.t()), diag)
@@ -69,7 +78,10 @@ def contrastive_loss(emb, adj1, adj2, label, emb1, emb2, diag):
     adj = adj1 + adj2
                             # 計算相似性損失
     similarity_loss = bce_loss(similarity_scores, adj)
-    loss = positive_loss  + negative_loss + diagonal_loss + similarity_loss
+    # loss = positive_loss  + negative_loss + similarity_loss + diagonal_loss
+    loss1 = -torch.log(positive_sum * (similarity_matrix_sum**(-1)) + 1e-8).mean()
+    loss2 = -torch.log(negative_sum * (similarity_matrix_sum**(-1)) + 1e-8).mean()
+    loss = loss1 + loss2 + diagonal_loss + similarity_loss
     # loss = positive_loss + negative_loss 
     # loss = torch.log(loss + 1e-8)
     return loss / ((2 * batch_size) **2)
@@ -105,9 +117,9 @@ def info_loss(emb, adj1, adj2, label):
     positive_pairs = similarity_matrix * (adj1 + adj2) 
     negative_pairs = similarity_matrix * ((1- adj1) + (1-adj2))  
     
-    penalty_term = torch.sum(similarity_matrix)
-    penalty_term = torch.mean(torch.sum(torch.exp(positive_pairs) / torch.sum(torch.exp(negative_pairs), dim=1, keepdim=True), dim=1))
-    penalty_coeff = 0.001
+    # penalty_term = torch.sum(similarity_matrix)
+    # penalty_term = torch.mean(torch.sum(torch.exp(positive_pairs) / torch.sum(torch.exp(negative_pairs), dim=1, keepdim=True), dim=1))
+    # penalty_coeff = 0.001
     
     similarity_matrix_sum = torch.sum(positive_pairs, 1, keepdim=True)
     positives_sum = torch.matmul(similarity_matrix,label.to(torch.float32))
