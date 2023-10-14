@@ -49,10 +49,10 @@ def train_eval(datadir,skin_type, loss_select, model_select , dataset_choice ,ca
     # 将最后一层的输出维度修改为类别数目
     num_classes = 1024
     
-    num_features = model_net.fc.in_features #512 # Resnet
-    # num_features = model_net.classifier.in_features # Desnet101
+    # num_features = model_net.fc.in_features #512 # Resnet
+    num_features = model_net.classifier.in_features # Desnet101
     # import pdb;pdb.set_trace()
-    model_net.fc = nn.Linear(num_features, num_classes) #512 # Resnet
+    # model_net.fc = nn.Linear(num_features, num_classes) #512 # Resnet
     # model_net.fc = model_net.fc.to(device) #512 # Resnet
     model_net.classifier = nn.Linear(num_features, num_classes) #desnet
 

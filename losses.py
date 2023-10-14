@@ -81,7 +81,7 @@ def contrastive_loss(emb, adj1, adj2, label, emb1, emb2, diag):
     # loss = positive_loss  + negative_loss + similarity_loss + diagonal_loss
     loss1 = -torch.log(positive_sum * (similarity_matrix_sum**(-1)) + 1e-8).mean()
     loss2 = -torch.log(negative_sum * (similarity_matrix_sum**(-1)) + 1e-8).mean()
-    loss = loss1 + loss2 + diagonal_loss + similarity_loss
+    loss = loss1 + loss2 + diagonal_loss
     # loss = positive_loss + negative_loss 
     # loss = torch.log(loss + 1e-8)
     return loss / ((2 * batch_size) **2)
