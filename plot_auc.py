@@ -48,78 +48,6 @@ from sklearn.metrics import confusion_matrix, plot_roc_curve, roc_auc_score, roc
 from sklearn.model_selection import StratifiedKFold
 from skimage import data_dir,io,color
 
-def dataloader_cv(datadir, skin_type, num_folds=5):
-    
-    if datadir == 'pd':
-        path_img = '/home/jding/Documents/PD_contrastive_research_0817/spect_513_data' + '/'
-        path_meta = '/home/jding/Documents/PD_contrastive_research_0817/spect_513_data' + '/'
-        coll = io.ImageCollection('/home/jding/Documents/PD_contrastive_research_0817/spect_513_data/spect_img_a2/*.jpg')
-
-        raw_image = io.concatenate_images(coll)
-
-        raw_meta = pd.read_csv(path_meta + 'label_513.csv')
-        label_630_id = raw_meta[raw_meta['ID'] < 634]
-        raw_data = raw_image[label_630_id['Python_ID']] / 255
-        raw_data = torch.tensor(raw_data).transpose(1, 3)
-        raw_data = np.array(raw_data)
-        raw_patients_feature_412 = np.asarray(label_630_id.iloc[:, 8:20])
-#         import pdb;pdb.set_trace()
-        # 创建 StratifiedKFold 对象
-        skf = StratifiedKFold(n_splits=num_folds, shuffle=True, random_state=42)
-
-        image_data_train_list = []
-        feature_data_train_list = []
-        adj_train_img_list = []
-        adj_f_knn_train_list = []
-        image_data_test_list = []
-        test_feature_data_list = []
-        adj_test_img_list = []
-        adj_f_knn_test_list = []
-        y_train_list = []
-        y_test_list = []
-#         import pdb;pdb.set_trace()
-        for train_index, test_index in skf.split(raw_data, label_630_id['Label_2'].values):
-            y_train = label_630_id['Label_2'].values[train_index]
-            y_test = label_630_id['Label_2'].values[test_index]
-            # 根据每个折叠的索引提取相应的训练和测试数据
-            raw_image_train = raw_data[train_index]
-            raw_image_test = raw_data[test_index]
-
-            raw_f_train = raw_patients_feature_412[train_index]
-            raw_f_test = raw_patients_feature_412[test_index]
-
-            image_data_train = torch.from_numpy(raw_image_train).float()
-            feature_data_train = torch.from_numpy(raw_f_train).float()
-            image_data_flatten = torch.flatten(image_data_train, start_dim=1)
-            adj_train_img = build_knn_graph(image_data_flatten, len(train_index)).float()
-
-            image_data_test = torch.from_numpy(raw_image_test).float()
-            data_features_test = raw_f_test
-            test_feature_data = torch.from_numpy(data_features_test).float()
-
-            image_data_test_flatten = torch.flatten(image_data_test, start_dim=1)
-            adj_test_img = build_knn_graph(image_data_test_flatten, len(test_index)).float()
-            adj_f_knn_train = build_knn_graph(raw_f_train, len(train_index)).float()
-            adj_f_knn_test = build_knn_graph(raw_f_test, len(test_index)).float()
-
-            # 将每个折叠的数据添加到列表中
-            y_train_list.append(y_train)
-            y_test_list.append(y_test)
-            image_data_train_list.append(image_data_train)
-            feature_data_train_list.append(feature_data_train)
-            adj_train_img_list.append(adj_train_img)
-            adj_f_knn_train_list.append(adj_f_knn_train)
-            image_data_test_list.append(image_data_test)
-            test_feature_data_list.append(test_feature_data)
-            adj_test_img_list.append(adj_test_img)
-            adj_f_knn_test_list.append(adj_f_knn_test)
-
-    return image_data_train_list, feature_data_train_list, adj_train_img_list, \
-        adj_f_knn_train_list, image_data_test_list, test_feature_data_list, \
-        adj_test_img_list, adj_f_knn_test_list, y_train_list ,y_test_list
-    
-
-
 import json
 
 
@@ -336,6 +264,16 @@ def train_eval(datadir,skin_type, loss_select, model_select , dataset_choice ,ca
             plt.title(f'Confusion Matrix - Fold {fold + 1}')
             plt.xlabel('Predicted Labels')
             plt.ylabel('True Labels')
+            
+            plt.figure()
+
+            plt.figure(figsize=(8, 6))
+            plt.scatter(test_output[:, 0].cpu().detach().numpy(), test_output[:, 1].cpu().detach().numpy(), c=pred.cpu().detach().numpy())
+            plt.colorbar(label='Predicted Labels')
+            plt.xlabel('Test Output (Feature 1)')
+            plt.ylabel('Test Output (Feature 2)')
+            plt.title(f'Scatter Plot - Fold {fold + 1}')
+            plt.show()
 
 
 
