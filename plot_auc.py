@@ -39,14 +39,100 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy
-
+from sklearn.model_selection import StratifiedKFold, GridSearchCV
+from sklearn.calibration import CalibratedClassifierCV
+import seaborn as sns
+import matplotlib.pyplot as plt
+import shutil
+import numpy as np
+import pandas as pd
+import scipy
 from sklearn.model_selection import StratifiedKFold, GridSearchCV
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.metrics import confusion_matrix, plot_roc_curve, roc_auc_score, roc_curve, auc, accuracy_score, precision_recall_fscore_support, jaccard_score
 
 
-from sklearn.model_selection import StratifiedKFold
-from skimage import data_dir,io,color
+def dataloader_cv(datadir, skin_type, num_folds=5):
+    
+    if datadir == 'pd':
+        path_img = '/home/jding/Documents/PD_contrastive_research_0817/spect_513_data' + '/'
+        path_meta = '/home/jding/Documents/PD_contrastive_research_0817/spect_513_data' + '/'
+        coll = io.ImageCollection('/home/jding/Documents/PD_contrastive_research_0817/spect_513_data/spect_img_a2/*.jpg')
+        
+        raw_image = io.concatenate_images(coll)
+
+        raw_meta = pd.read_csv(path_meta + 'label_513.csv')
+        label_630_id = raw_meta[raw_meta['ID'] < 634]
+        raw_data = raw_image[label_630_id['Python_ID']] / 255
+        raw_data = torch.tensor(raw_data).transpose(1, 3)
+        raw_data = np.array(raw_data)
+        raw_patients_feature_412 = np.asarray(label_630_id.iloc[:, 8:20])
+        
+#         import pdb;pdb.set_trace()
+        # 创建 StratifiedKFold 对象
+        skf = StratifiedKFold(n_splits=num_folds, shuffle=True, random_state=42)
+
+        image_data_train_list = []
+        feature_data_train_list = []
+        adj_train_img_list = []
+        adj_f_knn_train_list = []
+        image_data_test_list = []
+        test_feature_data_list = []
+        adj_test_img_list = []
+        adj_f_knn_test_list = []
+        y_train_list = []
+        y_test_list = []
+#         import pdb;pdb.set_trace()
+        for train_index, test_index in skf.split(raw_data, label_630_id['Label_2'].values):
+            y_train = label_630_id['Label_2'].values[train_index]
+            y_test = label_630_id['Label_2'].values[test_index]
+            # 根据每个折叠的索引提取相应的训练和测试数据
+            raw_image_train = raw_data[train_index]
+            raw_image_test = raw_data[test_index]
+
+            raw_f_train = raw_patients_feature_412[train_index]
+            raw_f_test = raw_patients_feature_412[test_index]
+
+            image_data_train = torch.from_numpy(raw_image_train).float()
+            feature_data_train = torch.from_numpy(raw_f_train).float()
+            image_data_flatten = torch.flatten(image_data_train, start_dim=1)
+            adj_train_img = build_knn_graph(image_data_flatten, len(train_index)).float()
+
+            image_data_test = torch.from_numpy(raw_image_test).float()
+            data_features_test = raw_f_test
+            test_feature_data = torch.from_numpy(data_features_test).float()
+
+            image_data_test_flatten = torch.flatten(image_data_test, start_dim=1)
+            adj_test_img = build_knn_graph(image_data_test_flatten, len(test_index)).float()
+            adj_f_knn_train = build_knn_graph(raw_f_train, len(train_index)).float()
+            adj_f_knn_test = build_knn_graph(raw_f_test, len(test_index)).float()
+
+            # 将每个折叠的数据添加到列表中
+            y_train_list.append(y_train)
+            y_test_list.append(y_test)
+            image_data_train_list.append(image_data_train)
+            feature_data_train_list.append(feature_data_train)
+            adj_train_img_list.append(adj_train_img)
+            adj_f_knn_train_list.append(adj_f_knn_train)
+            image_data_test_list.append(image_data_test)
+            test_feature_data_list.append(test_feature_data)
+            adj_test_img_list.append(adj_test_img)
+            adj_f_knn_test_list.append(adj_f_knn_test)
+
+    return image_data_train_list, feature_data_train_list, adj_train_img_list, \
+        adj_f_knn_train_list, image_data_test_list, test_feature_data_list, \
+        adj_test_img_list, adj_f_knn_test_list, y_train_list ,y_test_list
+
+
+
+def copy_images(source_dir, target_dir, indices, prefix='00'):
+    for i, index in enumerate(indices):
+        
+        for k in index:
+#             import pdb;pdb.set_trace()
+            source_path = os.path.join(source_dir, f'{prefix}{k}.jpg')
+            target_path = os.path.join(target_dir, f'{prefix}{k}.jpg')
+            shutil.copy(source_path, target_path)
 
 import json
 
@@ -72,12 +158,12 @@ def train_eval(datadir,skin_type, loss_select, model_select , dataset_choice ,ca
     # 将最后一层的输出维度修改为类别数目
     num_classes = 1024
     
-    # num_features = model_net.fc.in_features #512 # Resnet
-    num_features = model_net.classifier.in_features # Desnet101
+    num_features = model_net.fc.in_features #512 # Resnet
+#     num_features = model_net.classifier.in_features # Desnet101
     # import pdb;pdb.set_trace()
-    # model_net.fc = nn.Linear(num_features, num_classes) #512 # Resnet
-    # model_net.fc = model_net.fc.to(device) #512 # Resnet
-    model_net.classifier = nn.Linear(num_features, num_classes) #desnet
+    model_net.fc = nn.Linear(num_features, num_classes) #512 # Resnet
+    model_net.fc = model_net.fc.to(device) #512 # Resnet
+#     model_net.classifier = nn.Linear(num_features, num_classes) #desnet
     
     image_data_train_list, feature_data_train_list, adj_train_img_list, \
     adj_f_knn_train_list, image_data_test_list, test_feature_data_list, \
@@ -251,9 +337,10 @@ def train_eval(datadir,skin_type, loss_select, model_select , dataset_choice ,ca
             all_tpr.append(tpr)
             all_roc_auc.append(roc_auc)
             all_aucs.append(roc_auc)
+#             import pdb;pdb.set_trace()
             
-            false_positive_indices = np.where((y_test == 0) & (pred.cpu().detach().numpy() == 1))[0]
-            false_negative_indices = np.where((y_test == 1) & (pred.cpu().detach().numpy() == 0))[0]
+            false_positive_indices = np.where((y_test.cpu().numpy() == 0) & (pred.cpu().detach().numpy() == 1))[0]
+            false_negative_indices = np.where((y_test.cpu().numpy()  == 1) & (pred.cpu().detach().numpy() == 0))[0]
 
             false_positives.append(false_positive_indices.tolist())
             false_negatives.append(false_negative_indices.tolist())
@@ -308,16 +395,31 @@ def train_eval(datadir,skin_type, loss_select, model_select , dataset_choice ,ca
 
     print(f'Average AUC: {avg_auc:.2f}')
     print(f'Standard Deviation of AUC: {std_auc:.2f}')
+    
+    result_data = {
+        'FalsePositives': false_positives,
+        'FalseNegatives': false_negatives
+    }
 
+        
     # 存储 False Positives 和 False Negatives 到 JSON 文件
-#     result_data = {
-#         'FalsePositives': false_positives,
-#         'FalseNegatives': false_negatives
-#     }
 
-#     with open('false_samples.json', 'w') as json_file:
-#         json.dump(result_data, json_file, indent=4)
+    with open('false_samples.json', 'w') as json_file:
+        json.dump(result_data, json_file, indent=4)
+    
+    datadir = '/home/jding/Documents/PD_contrastive_research_0817/spect_513_data/spect_img_a2'
+    
+    target_false_positives_dir = '/home/jding/Documents/PD_contrastive_research_0817/saved_fig/target_false_positives'  # 指定目标文件夹
+    os.makedirs(target_false_positives_dir, exist_ok=True)
+    copy_images(datadir, target_false_positives_dir, false_positives)
 
+    # 复制 False Negatives 的影像到目标文件夹
+    target_false_negatives_dir = '/home/jding/Documents/PD_contrastive_research_0817/saved_fig/target_false_negatives'  # 指定目标文件夹
+    os.makedirs(target_false_negatives_dir, exist_ok=True)
+    copy_images(datadir, target_false_negatives_dir, false_negatives)
+
+
+    
             
 def main():
 #     parser = argparse.ArgumentParser()
@@ -333,10 +435,25 @@ def main():
     
 #     args = parser.parse_args()
 
+    flag = torch.cuda.is_available()
+    if flag:
+        print("CUDA可使用")
+    else:
+        print("CUDA不可用")
+
+    ngpu= 1
+#     os.environ['CUDA_VISIBLE_DEVICES'] ='0'
+    # Decide which device we want to run on
+    device = torch.device("cuda:0" if (torch.cuda.is_available() and ngpu > 0) else "cpu")
+    torch.cuda.set_device(0)
+    print("驱动为：",device)
+    print("GPU型号: ",torch.cuda.get_device_name(0))
+
+
     img_data_dir = 'pd'
     skin_type = 'dermatology_images'
     losses_choice = 'Contrastive_loss'
-    model_select = 'densenet'
+    model_select = 'resnet_18'
     dataset_choice = 'pd'
     category = 'your_category'  # 设置正确的类别值
     n_epoch = 300
@@ -348,3 +465,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+
+
