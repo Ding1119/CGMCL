@@ -49,12 +49,12 @@ def train_eval(datadir,skin_type, loss_select, model_select , dataset_choice ,ca
     # 将最后一层的输出维度修改为类别数目
     num_classes = 1024
     
-    # num_features = model_net.fc.in_features #512 # Resnet
-    num_features = model_net.classifier.in_features # Desnet101
+    num_features = model_net.fc.in_features #512 # Resnet
+    # num_features = model_net.classifier.in_features # Desnet101
     # import pdb;pdb.set_trace()
-    # model_net.fc = nn.Linear(num_features, num_classes) #512 # Resnet
-    # model_net.fc = model_net.fc.to(device) #512 # Resnet
-    model_net.classifier = nn.Linear(num_features, num_classes) #desnet
+    model_net.fc = nn.Linear(num_features, num_classes) #512 # Resnet
+    model_net.fc = model_net.fc.to(device) #512 # Resnet
+    # model_net.classifier = nn.Linear(num_features, num_classes) #desnet
 
     image_data_train, feature_data_train, adj_train_img, adj_f_knn_train, image_data_test, test_feature_data, adj_test_img, adj_f_knn_test = dataloader(datadir,skin_type)
 
@@ -111,7 +111,7 @@ def train_eval(datadir,skin_type, loss_select, model_select , dataset_choice ,ca
             diag = torch.diag(adj.sum(dim=1))
             loss_extra = criterion2( emb, adj_train_img, adj_f_knn_train, y, output1, output2, diag).to(device)
             loss = (1-alpha)*(loss_ce1 + loss_ce2) + alpha* loss_extra
-
+            # loss = loss_ce1 + loss_ce2
         elif loss_select == 'MGEC_loss':
             adj = adj_train_img +  adj_f_knn_train
             diag = torch.diag(adj.sum(dim=1))
@@ -182,7 +182,7 @@ def train_eval(datadir,skin_type, loss_select, model_select , dataset_choice ,ca
         print(calculate_metrics_new(y_test.cpu().detach().numpy(), pred.cpu().detach().numpy() ))
         print("Loss:", loss_select, "class_name",class_name,"Accuracy:", accuracy)
         print(classification_report(y_test.cpu().detach().numpy(), pred.cpu().detach().numpy() ))
-        if datadir == 'abide':
+        if datadir == 'pd':
             accuracy, precision, recall, fscore, sensivity, specificity, nmi, ari = run_eval(y_test.cpu().detach().numpy(), pred.cpu().detach().numpy())
             print("acc:",accuracy, "precision:", precision,"recall:", recall,"fscore:", fscore,"sensitivity:", sensivity,"specificity:", specificity, "nmi", nmi, "ari", ari)
             # plot_ROC(pred.cpu().detach().numpy() , y_test.cpu().detach().numpy(), 3, classes, skin_type, loss_select)
