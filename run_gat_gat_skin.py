@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import datasets
 from sklearn.metrics import roc_curve,auc
-from scipy import interp
+# from scipy import interp
 from sklearn.neighbors import NearestNeighbors
 from itertools import cycle
 from tqdm import tqdm
@@ -30,7 +30,7 @@ import os
 # os.environ['CUDA_LAUNCH_BLOCKING'] = "0"
 
 
-def train_eval(datadir,skin_type, loss_select, model_select , dataset_choice ,category, epoch, n_classes):
+def train_eval(datadir,skin_type, loss_select, model_select , dataset_choice ,category, epoch, n_classes, exp_mode):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")   
     torch.cuda.is_available()
     if model_select == 'resnet_18':
@@ -56,7 +56,7 @@ def train_eval(datadir,skin_type, loss_select, model_select , dataset_choice ,ca
     model_net.fc = model_net.fc.to(device) #512 # Resnet
     # model_net.classifier = nn.Linear(num_features, num_classes) #desnet
 
-    image_data_train, feature_data_train, adj_train_img, adj_f_knn_train, image_data_test, test_feature_data, adj_test_img, adj_f_knn_test = dataloader(datadir,skin_type)
+    image_data_train, feature_data_train, adj_train_img, adj_f_knn_train, image_data_test, test_feature_data, adj_test_img, adj_f_knn_test = dataloader(datadir,skin_type, exp_mode)
 
     projection = Projection(262, 3)
     if datadir == 'skin':
@@ -100,8 +100,8 @@ def train_eval(datadir,skin_type, loss_select, model_select , dataset_choice ,ca
 
         output1, output2, emb = model(image_data_train , feature_data_train,adj_train_img, adj_f_knn_train)
          
-        y = torch.tensor(label_return(dataset_choice, class_name, "train")).to(device)
-        
+        y = torch.tensor(label_return(dataset_choice, class_name, "train", exp_mode)).to(device)
+        # import pdb;pdb.set_trace()
         loss_ce1 = criterion1(output1, y)
         loss_ce2 = criterion1(output2, y)
         alpha = 0.4
@@ -146,7 +146,7 @@ def train_eval(datadir,skin_type, loss_select, model_select , dataset_choice ,ca
         adj_f_knn_test = adj_f_knn_test.to(device)
         
         test_output1, test_output2, emb  = model(image_data_test, test_feature_data , adj_test_img, adj_f_knn_test )
-
+        
         # test_output1  = model(test_image_data, test_adjacency_matrix, adj_test_img )
         m = nn.Softmax(dim=1)
         # import pdb;pdb.set_trace()
@@ -170,7 +170,7 @@ def train_eval(datadir,skin_type, loss_select, model_select , dataset_choice ,ca
         
         # y_test = torch.empty(100).random_(2)
     #     y_test = torch.tensor(label_3_test).to(device)
-        y_test = torch.from_numpy(label_return(dataset_choice ,class_name, "test")).to(device)
+        y_test = torch.from_numpy(label_return(dataset_choice ,class_name, "test", exp_mode)).to(device)
 
         # import pdb;pdb.set_trace()
         correct = (pred  == y_test).sum().item()
@@ -182,11 +182,15 @@ def train_eval(datadir,skin_type, loss_select, model_select , dataset_choice ,ca
         print(calculate_metrics_new(y_test.cpu().detach().numpy(), pred.cpu().detach().numpy() ))
         print("Loss:", loss_select, "class_name",class_name,"Accuracy:", accuracy)
         print(classification_report(y_test.cpu().detach().numpy(), pred.cpu().detach().numpy() ))
-        if datadir == 'pd':
-            accuracy, precision, recall, fscore, sensivity, specificity, nmi, ari = run_eval(y_test.cpu().detach().numpy(), pred.cpu().detach().numpy())
-            print("acc:",accuracy, "precision:", precision,"recall:", recall,"fscore:", fscore,"sensitivity:", sensivity,"specificity:", specificity, "nmi", nmi, "ari", ari)
-            # plot_ROC(pred.cpu().detach().numpy() , y_test.cpu().detach().numpy(), 3, classes, skin_type, loss_select)
-            # print_auc(pred.cpu().detach().numpy() , y_test.cpu().detach().numpy(), 3, category, skin_type, loss_select)
+        # if n_classes == 2:
+        #     if datadir == 'pd':
+        #         accuracy, precision, recall, fscore, sensivity, specificity, nmi, ari = run_eval(y_test.cpu().detach().numpy(), pred.cpu().detach().numpy())
+        #         print("acc:",accuracy, "precision:", precision,"recall:", recall,"fscore:", fscore,"sensitivity:", sensivity,"specificity:", specificity, "nmi", nmi, "ari", ari)
+        #         # plot_ROC(pred.cpu().detach().numpy() , y_test.cpu().detach().numpy(), 3, classes, skin_type, loss_select)
+        #         # print_auc(pred.cpu().detach().numpy() , y_test.cpu().detach().numpy(), 3, category, skin_type, loss_select)
+
+        # else:
+        #     pass
 
 def main():
     parser = argparse.ArgumentParser()
@@ -199,9 +203,10 @@ def main():
     parser.add_argument('--category', type=str)
     parser.add_argument('--n_epoch', type=int)
     parser.add_argument('--n_classes', type=int)
+    parser.add_argument('--exp_mode', type=str)
     
     args = parser.parse_args()
-    train_eval(args.img_data_dir, args.skin_type, args.losses_choice, args.model_select, args.dataset_choice,args.category, args.n_epoch, args.n_classes)
+    train_eval(args.img_data_dir, args.skin_type, args.losses_choice, args.model_select, args.dataset_choice,args.category, args.n_epoch, args.n_classes, args.exp_mode)
 
 
 if __name__ == '__main__':

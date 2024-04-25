@@ -1,13 +1,14 @@
 from sklearn.metrics import confusion_matrix, accuracy_score, f1_score, roc_auc_score, recall_score, precision_score
 from sklearn.metrics import f1_score, roc_auc_score, average_precision_score, confusion_matrix
 from sklearn.metrics import roc_curve,auc
-from scipy import interp
+# from scipy import interp
 import matplotlib.pyplot as plt
 from sklearn.neighbors import NearestNeighbors
 import pandas as pd
 import numpy as np
 from sklearn import metrics
 import torch
+from collections import Counter
 from itertools import cycle
 import torch
 import torch
@@ -15,7 +16,71 @@ from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.metrics import adjusted_rand_score
 # 转换聚类标签为PyTorch张量
 
+def transform_label(input_data, input_label_3, exp_mode):
+    
+    if exp_mode == 'normal_abnormal':
+        n_label = input_label_3[input_label_3 == 0]
+        ab_label = input_label_3[input_label_3 == 2]
+        n_sample = input_data[input_label_3 == 0]
+        ab_sample = input_data[input_label_3 == 2]
+        final_label = np.concatenate((n_label, ab_label))
+        final_samples = np.concatenate((n_sample, ab_sample), axis=0)
 
+        final_label[final_label == 0] = 0
+        final_label[final_label == 2] = 1
+        np.random.seed(42) 
+        indices = np.arange(len(final_label))
+
+# 打乱索引数组
+        np.random.shuffle(indices)
+
+        # 使用打乱后的索引数组重新排列 final_label 和 final_samples
+        final_label = final_label[indices]
+        final_samples = final_samples[indices]
+        return final_label, final_samples
+
+    elif exp_mode == 'normal_mid':
+        n_label = input_label_3[input_label_3 == 0]
+        mid_label = input_label_3[input_label_3 == 1]
+        n_sample = input_data[input_label_3 == 0]
+        mid_sample = input_data[input_label_3 == 1]
+        
+        final_label = np.concatenate((n_label, mid_label),axis=0)
+        final_samples = np.concatenate([n_sample, mid_sample], axis=0)
+        final_label[final_label == 0] = 0
+        final_label[final_label == 1] = 1
+        np.random.seed(42) 
+        indices = np.arange(len(final_label))
+
+# 打乱索引数组
+        np.random.shuffle(indices)
+
+        # 使用打乱后的索引数组重新排列 final_label 和 final_samples
+        final_label = final_label[indices]
+        final_samples = final_samples[indices]
+        # import pdb;pdb.set_trace()
+        return final_label, final_samples
+
+    elif exp_mode == 'mid_abnormal':
+        n_label = input_label_3[input_label_3 == 0]
+        ab_label = input_label_3[input_label_3 == 2]
+        n_sample = input_data[input_label_3 == 0]
+        ab_sample = input_data[input_label_3 == 2]
+        final_label = np.concatenate((n_label, ab_label))
+        final_samples = np.concatenate(n_sample, ab_sample)
+
+        final_label[final_label == 0] = 0
+        final_label[final_label == 2] = 1
+        np.random.seed(42) 
+        indices = np.arange(len(final_label))
+
+# 打乱索引数组
+        np.random.shuffle(indices)
+
+        # 使用打乱后的索引数组重新排列 final_label 和 final_samples
+        final_label = final_label[indices]
+        final_samples = final_samples[indices]
+        return final_label, final_samples
 
 
 
@@ -43,7 +108,7 @@ def run_eval(y_test, pred_y):
     # 转换为PyTorch张量
     true_labels = torch.tensor(y_test)
     predicted_labels = torch.tensor(pred_y)
-    import pdb;pdb.set_trace()
+    # import pdb;pdb.set_trace()
     # 使用sklearn.metrics中的adjusted_rand_score计算ARI
     ari = adjusted_rand_score(true_labels, predicted_labels)
 
@@ -53,7 +118,7 @@ def run_eval(y_test, pred_y):
 
     return [accuracy, precision, recall, fscore, sensivity, specificity, nmi, ari]
 
-def label_return(dataset_choice, category,label):
+def label_return(dataset_choice, category,label, exp_mode):
     if dataset_choice == 'skin':
         if label == 'train':
             
@@ -85,14 +150,20 @@ def label_return(dataset_choice, category,label):
 
         label_3 = label_630_id['Lebel_3'].values
         label_2 = label_630_id['Label_2'].values
-
+        # label_2_mid = transform_array(label_630_id, label_3)
+        final_labels, final_data = transform_label(label_630_id, label_3, exp_mode='normal_mid')
+        train_length = int(len(final_data)*0.8)
+        
+        
         if label == 'train':
 
-            raw_train_label = label_3[0:300]
-            
+            # raw_train_label = label_3[0:300]
+            raw_train_label = final_labels[0:train_length]
+            # import pdb;pdb.set_trace()
             return raw_train_label
         else:
-            raw_test_label = label_3[300:]
+            # raw_test_label = label_3[300:]
+            raw_test_label = final_labels[train_length:]
             
             return raw_test_label
 
@@ -110,72 +181,52 @@ def build_knn_graph(input_data, k):
 
 def calculate_metrics_new(gt, pred):
     """
-    :param gt: 数据的真实标签，一般对应二分类的整数形式，例如:y=[1,0,1,0,1]
-    :param pred: 输入数据的预测值，因为计算混淆矩阵的时候，内容必须是整数，所以对于float的值，应该先调整为整数
-    :return: 返回相应的评估指标的值
+    Calculate various classification metrics based on ground truth and prediction.
+    
+    :param gt: Ground truth labels, e.g., y=[1,0,1,0,1]
+    :param pred: Predicted labels (predictions should be converted to int if they are probabilities)
+    :return: Dictionary of evaluation metrics including sensitivity, specificity, PPV, and NPV
     """
-    """
-        confusion_matrix(y_true,y_pred,labels,sample_weight,normalize)
-        y_true:真实标签；
-        y_pred:预测概率转化为标签；
-        labels:用于标签重新排序或选择标签子集；
-        sample_weight:样本权重；
-        normalize:在真实（行）、预测（列）条件或所有总体上标准化混淆矩阵；
-    """
-    print("starting!!!-----------------------------------------------")
-#     sns.set()
-#     fig, (ax1, ax2) = plt.subplots(figsize=(10, 8), nrows=2)
+    print("Starting metrics calculation...-----------------------------------------------")
+    
+    # Generate the confusion matrix
     confusion = confusion_matrix(gt, pred)
-    # 打印具体的混淆矩阵的每个部分的值
-#     print(confusion)
-    # 从左到右依次表示TN、FP、FN、TP
-#     print(confusion.ravel())
-    # 绘制混淆矩阵的图
-    #sns.heatmap(confusion,annot=True)
-#     ax2.set_title('sns_heatmap_confusion_matrix')
-#     ax2.set_xlabel('y_pred')
-#     ax2.set_ylabel('y_true')
-    # fig.savefig('sns_heatmap_confusion_matrix.jpg', bbox_inches='tight')
-    # 混淆矩阵的每个值的表示
-    TP = confusion[1, 1]
-    TN = confusion[0, 0]
-    FP = confusion[0, 1]
-    FN = confusion[1, 0]
-    # 通过混淆矩阵计算每个评估指标的值
-    # print('AUC:',roc_auc_score(gt, pred_prob))
-    print('Accuracy:', (TP + TN) / float(TP + TN + FP + FN))
-    print('Sensitivity:', TP / float(TP + FN))
-    Sensitivity = TP / float(TP + FN)
-    print('Specificity:', TN / float(TN + FP))
-    Specificity = TN / float(TN + FP)
-    # print('PPV:',TP / float(TP + FP))
-    # PPV = TP / float(TP + FP)
-    # print('NPV:',TN/float(TN + FN))
-    # NPV = TN/float(TN + FN)
-    # print('Recall:',TP / float(TP + FN))
-    print('Precision:',TP / float(TP + FP))
-    # # 用于计算F1-score = 2*recall*precision/recall+precision,这个情况是比较多的
-    # P = TP / float(TP + FP)
-    # R = TP / float(TP + FN)
-    # print('F1-score:',(2*P*R)/(P+R))
-    # print('True Positive Rate:',round(TP / float(TP + FN)))
-    # print('False Positive Rate:',FP / float(FP + TN))
-    print('Ending!!!------------------------------------------------------')
- 
-    # 采用sklearn提供的函数验证,用于对比混淆矩阵方法与这个方法的区别
-    # print("the result of sklearn package")
-    # AUC = roc_auc_score(gt, pred_prob)
-    # print("sklearn auc:",AUC)
-    # accuracy = accuracy_score(gt,pred)
-    # print("sklearn accuracy:",accuracy)
-    # recal = recall_score(gt,pred)
-    # precision = precision_score(gt,pred)
-    # print("sklearn recall:{},precision:{}".format(recal,precision))
-    # print("sklearn F1-score:{}".format((2*recal*precision)/(recal+precision)))
-    
-    # print('---------- AUC----', AUC)
-    
-    return Sensitivity, Specificity
+    TP = confusion[1, 1]  # True Positive
+    TN = confusion[0, 0]  # True Negative
+    FP = confusion[0, 1]  # False Positive
+    FN = confusion[1, 0]  # False Negative
+
+    # Calculating evaluation metrics
+    accuracy = (TP + TN) / float(TP + TN + FP + FN)
+    sensitivity = TP / float(TP + FN)  # Recall
+    specificity = TN / float(TN + FP)
+    PPV = TP / float(TP + FP) if (TP + FP) != 0 else 0  # Positive Predictive Value
+    NPV = TN / float(TN + FN) if (TN + FN) != 0 else 0  # Negative Predictive Value
+    precision = TP / float(TP + FP)
+    recall = TP / float(TP + FN)
+    f1_score = (2 * precision * recall) / (precision + recall) if (precision + recall) != 0 else 0
+
+    # Print metrics for verification
+    print(f'Accuracy: {accuracy}')
+    print(f'Sensitivity: {sensitivity}')
+    print(f'Specificity: {specificity}')
+    print(f'PPV: {PPV}')
+    print(f'NPV: {NPV}')
+    print(f'Precision: {precision}')
+    print(f'F1-score: {f1_score}')
+    print("Ending metrics calculation...------------------------------------------------------")
+
+    # Returning metrics as a dictionary
+    return {
+        'Accuracy': accuracy,
+        'Sensitivity': sensitivity,
+        'Specificity': specificity,
+        'PPV': PPV,
+        'NPV': NPV,
+        'Precision': precision,
+        'F1-score': f1_score
+    }
+
 
 def print_auc(model_pred, y_test, n_classes ,name, image_type, loss_select):
         

@@ -4,6 +4,7 @@ from sklearn import preprocessing
 from sklearn.neighbors import NearestNeighbors
 import pandas as pd
 from skimage import data_dir,io,color
+from utils import *
 
 
 def build_knn_graph(input_data, k):
@@ -16,7 +17,7 @@ def build_knn_graph(input_data, k):
         
     return adjacency_matrix
 
-def dataloader(datadir,skin_type):
+def dataloader(datadir,skin_type, exp_mode):
 
     if datadir == 'skin':
 
@@ -88,21 +89,29 @@ def dataloader(datadir,skin_type):
         label_630_id = raw_meta[raw_meta['ID'] < 634]
         raw_data = raw_image[label_630_id['Python_ID']] / 255
 
+        label_3 = label_630_id['Lebel_3'].values
+        label_2 = label_630_id['Label_2'].values
+        
+        _, raw_data = transform_label(raw_data, label_3, exp_mode='normal_mid')
+        train_length = int(len(raw_data)*0.8)
+
+
         raw_data = torch.tensor(raw_data).transpose(1,3)
         # raw_data = torch.flatten(raw_data, start_dim=1)
         raw_data = np.array(raw_data)
-        raw_patients_feature_412 = np.asarray(label_630_id.iloc[:,8:20])
-
+        _, raw_patients_feature_412 = transform_label(np.asarray(label_630_id.iloc[:,8:20]), label_3, exp_mode='normal_mid')
+        # raw_patients_feature_412 = np.asarray(label_630_id.iloc[:,8:20])
+        # import pdb;pdb.set_trace()
         
-        raw_image_train = raw_data[0:300]
-        raw_image_test = raw_data[300:]
-        
+        raw_image_train = raw_data[0:train_length]
+        raw_image_test = raw_data[train_length:]
+        # import pdb;pdb.set_trace()
         # raw_image_train = np.load('/Users/test/Documents/Contrastive_PD/skin_dataset_ok/clinical_images/train_clinic_f_413.npy') /255
         # raw_image_test = np.load('/Users/test/Documents/Contrastive_PD/skin_dataset_ok/clinical_images/test_clinic_f_395.npy') /255
         
 
-        raw_f_train = raw_patients_feature_412[0:300]
-        raw_f_test = raw_patients_feature_412[300:]
+        raw_f_train = raw_patients_feature_412[0:train_length]
+        raw_f_test = raw_patients_feature_412[train_length:]
         # raw_f_train = preprocessing.scale(raw_f_train )
         # raw_f_test = preprocessing.scale(raw_f_test )
         
@@ -118,7 +127,7 @@ def dataloader(datadir,skin_type):
         image_data_flatten = torch.flatten(image_data_train, start_dim=1)
 
         # import pdb;pdb.set_trace()
-        adj_train_img = build_knn_graph(image_data_flatten,300).float()
+        adj_train_img = build_knn_graph(image_data_flatten,200).float()
         
         # adj_train_img = kneighbors_graph(np.array(image_data_flatten), 200, mode='connectivity', include_self=True).toarray()
 
@@ -142,15 +151,15 @@ def dataloader(datadir,skin_type):
   
         # adj_test_img = kneighbors_graph(np.array(image_data_test_flatten), 200, mode='connectivity', include_self=True).toarray()
         
-        adj_test_img = build_knn_graph(image_data_test_flatten, 80).float() #[104, 104]
+        adj_test_img = build_knn_graph(image_data_test_flatten, 40).float() #[104, 104]
 
         
-        adj_f_knn_train =  build_knn_graph(raw_f_train, 300).float()
+        adj_f_knn_train =  build_knn_graph(raw_f_train, 200).float()
         
         # adj_f_knn_train = adj_f_knn_train.toarray()
         # adj_f_knn_train = torch.from_numpy(adj_f_knn_train).float()
         # adj_f_knn_test = kneighbors_graph(np.array(raw_f_test), 300, mode='connectivity', include_self=True)
-        adj_f_knn_test = build_knn_graph(raw_f_test, 80).float()
+        adj_f_knn_test = build_knn_graph(raw_f_test, 40).float()
         # import pdb;pdb.set_trace()
 
 
