@@ -6,7 +6,7 @@ losses_select='Contrastive_loss'
 dataset_choice='pd'
 image_type='dermatology_images'
 n_classes=3
-exp_mode='normal_mid' #mid_abnormal, normal_mid, normal_abnormal
+exp_mode='normal_mid' #normal_mid, mid_abnormal, normal_abnormal
 num_experiments=5
 
 # 確保存儲結果的目錄存在
@@ -16,7 +16,7 @@ mkdir -p ${DIR}
 for i in DaG
 do
   # 初始化結果檔名
-  output_file="${DIR}/pd_n_class${n_classes}_${model_select}_${losses_select}_GCN_logs_v3_${i}.txt"
+  output_file="${DIR}/pd_${exp_mode}_n_class${n_classes}_${model_select}_${losses_select}_GCN_logs_v3_${i}.txt"
   > ${output_file}  # 清空檔案內容
 
   # 進行五次實驗
@@ -29,7 +29,7 @@ do
     --model_select ${model_select} \
     --dataset_choice ${dataset_choice} \
     --category ${i} \
-    --n_epoch 5 \
+    --n_epoch 300 \
     --n_classes 2 \
     --exp_mode ${exp_mode} >> ${output_file}
   done

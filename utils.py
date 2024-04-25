@@ -23,8 +23,8 @@ def transform_label(input_data, input_label_3, exp_mode):
         ab_label = input_label_3[input_label_3 == 2]
         n_sample = input_data[input_label_3 == 0]
         ab_sample = input_data[input_label_3 == 2]
-        final_label = np.concatenate((n_label, ab_label))
-        final_samples = np.concatenate((n_sample, ab_sample), axis=0)
+        final_label = np.concatenate((n_label, ab_label), axis=0)
+        final_samples = np.concatenate([n_sample, ab_sample], axis=0)
 
         final_label[final_label == 0] = 0
         final_label[final_label == 2] = 1
@@ -37,6 +37,7 @@ def transform_label(input_data, input_label_3, exp_mode):
         # 使用打乱后的索引数组重新排列 final_label 和 final_samples
         final_label = final_label[indices]
         final_samples = final_samples[indices]
+        #print(f'===={exp_mode} classes:===', Counter(final_label))
         return final_label, final_samples
 
     elif exp_mode == 'normal_mid':
@@ -59,17 +60,18 @@ def transform_label(input_data, input_label_3, exp_mode):
         final_label = final_label[indices]
         final_samples = final_samples[indices]
         # import pdb;pdb.set_trace()
+        #print(f'===={exp_mode} classes:===', Counter(final_label))
         return final_label, final_samples
 
     elif exp_mode == 'mid_abnormal':
-        n_label = input_label_3[input_label_3 == 0]
+        mid_label = input_label_3[input_label_3 == 1]
         ab_label = input_label_3[input_label_3 == 2]
-        n_sample = input_data[input_label_3 == 0]
+        mid_sample = input_data[input_label_3 == 1]
         ab_sample = input_data[input_label_3 == 2]
-        final_label = np.concatenate((n_label, ab_label))
-        final_samples = np.concatenate(n_sample, ab_sample)
+        final_label = np.concatenate((mid_label, ab_label),axis=0)
+        final_samples = np.concatenate([mid_sample, ab_sample],axis=0)
 
-        final_label[final_label == 0] = 0
+        final_label[final_label == 1] = 0
         final_label[final_label == 2] = 1
         np.random.seed(42) 
         indices = np.arange(len(final_label))
@@ -80,6 +82,7 @@ def transform_label(input_data, input_label_3, exp_mode):
         # 使用打乱后的索引数组重新排列 final_label 和 final_samples
         final_label = final_label[indices]
         final_samples = final_samples[indices]
+        #print(f'===={exp_mode} classes:===', Counter(final_label))
         return final_label, final_samples
 
 
@@ -151,7 +154,7 @@ def label_return(dataset_choice, category,label, exp_mode):
         label_3 = label_630_id['Lebel_3'].values
         label_2 = label_630_id['Label_2'].values
         # label_2_mid = transform_array(label_630_id, label_3)
-        final_labels, final_data = transform_label(label_630_id, label_3, exp_mode='normal_mid')
+        final_labels, final_data = transform_label(label_630_id, label_3, exp_mode)
         train_length = int(len(final_data)*0.8)
         
         
