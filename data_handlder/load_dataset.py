@@ -92,14 +92,14 @@ def dataloader(datadir,skin_type, exp_mode):
         label_3 = label_630_id['Lebel_3'].values
         label_2 = label_630_id['Label_2'].values
         
-        _, raw_data = transform_label(raw_data, label_3, exp_mode='normal_mid')
+        _, raw_data = transform_label(raw_data, label_2 ,label_3, exp_mode)
         train_length = int(len(raw_data)*0.8)
-
+        
 
         raw_data = torch.tensor(raw_data).transpose(1,3)
         # raw_data = torch.flatten(raw_data, start_dim=1)
         raw_data = np.array(raw_data)
-        _, raw_patients_feature_412 = transform_label(np.asarray(label_630_id.iloc[:,8:20]), label_3, exp_mode='normal_mid')
+        _, raw_patients_feature_412 = transform_label(np.asarray(label_630_id.iloc[:,8:20]),label_2 ,label_3, exp_mode)
         # raw_patients_feature_412 = np.asarray(label_630_id.iloc[:,8:20])
         # import pdb;pdb.set_trace()
         
