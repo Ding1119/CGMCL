@@ -16,18 +16,18 @@ from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.metrics import adjusted_rand_score
 # 转换聚类标签为PyTorch张量
 
-def transform_label(input_data, input_label_3, exp_mode):
+def transform_label(input_data, input_label_2 ,input_label_3, exp_mode):
     
     if exp_mode == 'normal_abnormal':
-        n_label = input_label_3[input_label_3 == 0]
-        ab_label = input_label_3[input_label_3 == 2]
-        n_sample = input_data[input_label_3 == 0]
-        ab_sample = input_data[input_label_3 == 2]
+        n_label = input_label_2[input_label_2 == 0]
+        ab_label = input_label_2[input_label_2 == 1]
+        n_sample = input_data[input_label_2 == 0]
+        ab_sample = input_data[input_label_2 == 1]
         final_label = np.concatenate((n_label, ab_label), axis=0)
         final_samples = np.concatenate([n_sample, ab_sample], axis=0)
 
         final_label[final_label == 0] = 0
-        final_label[final_label == 2] = 1
+        final_label[final_label == 1] = 1
         np.random.seed(42) 
         indices = np.arange(len(final_label))
 
@@ -37,7 +37,7 @@ def transform_label(input_data, input_label_3, exp_mode):
         # 使用打乱后的索引数组重新排列 final_label 和 final_samples
         final_label = final_label[indices]
         final_samples = final_samples[indices]
-        #print(f'===={exp_mode} classes:===', Counter(final_label))
+        # print(f'===={exp_mode} classes:===', Counter(final_label))
         return final_label, final_samples
 
     elif exp_mode == 'normal_mid':
@@ -154,7 +154,7 @@ def label_return(dataset_choice, category,label, exp_mode):
         label_3 = label_630_id['Lebel_3'].values
         label_2 = label_630_id['Label_2'].values
         # label_2_mid = transform_array(label_630_id, label_3)
-        final_labels, final_data = transform_label(label_630_id, label_3, exp_mode)
+        final_labels, final_data = transform_label(label_630_id, label_2,label_3, exp_mode)
         train_length = int(len(final_data)*0.8)
         
         
@@ -182,16 +182,21 @@ def build_knn_graph(input_data, k):
     return adjacency_matrix
 
 
-def calculate_metrics_new(gt, pred):
+from sklearn.metrics import confusion_matrix, roc_curve, auc
+
+def calculate_metrics_new(gt, scores):
     """
-    Calculate various classification metrics based on ground truth and prediction.
+    Calculate various classification metrics including ROC and AUC based on ground truth and prediction scores.
     
     :param gt: Ground truth labels, e.g., y=[1,0,1,0,1]
-    :param pred: Predicted labels (predictions should be converted to int if they are probabilities)
-    :return: Dictionary of evaluation metrics including sensitivity, specificity, PPV, and NPV
+    :param scores: Predicted scores or probabilities (not converted to int)
+    :return: Dictionary of evaluation metrics including sensitivity, specificity, PPV, NPV, ROC curve, and AUC
     """
     print("Starting metrics calculation...-----------------------------------------------")
     
+    # Thresholding scores at 0.5 to get binary predictions
+    pred = [1 if score >= 0.5 else 0 for score in scores]
+
     # Generate the confusion matrix
     confusion = confusion_matrix(gt, pred)
     TP = confusion[1, 1]  # True Positive
@@ -209,12 +214,17 @@ def calculate_metrics_new(gt, pred):
     recall = TP / float(TP + FN)
     f1_score = (2 * precision * recall) / (precision + recall) if (precision + recall) != 0 else 0
 
+    # Calculating ROC and AUC
+    fpr, tpr, _ = roc_curve(gt, scores)
+    roc_auc = auc(fpr, tpr)
+
     # Print metrics for verification
     print(f'Accuracy: {accuracy}')
     print(f'Sensitivity: {sensitivity}')
     print(f'Specificity: {specificity}')
     print(f'PPV: {PPV}')
     print(f'NPV: {NPV}')
+    print(f'AUC: {roc_auc}')
     print(f'Precision: {precision}')
     print(f'F1-score: {f1_score}')
     print("Ending metrics calculation...------------------------------------------------------")
@@ -227,8 +237,10 @@ def calculate_metrics_new(gt, pred):
         'PPV': PPV,
         'NPV': NPV,
         'Precision': precision,
-        'F1-score': f1_score
+        'F1-score': f1_score,
+        'AUC': roc_auc
     }
+
 
 
 def print_auc(model_pred, y_test, n_classes ,name, image_type, loss_select):
@@ -265,7 +277,7 @@ def print_auc(model_pred, y_test, n_classes ,name, image_type, loss_select):
 
     mean_tpr = np.zeros_like(all_fpr)
     for i in range(n_classes):
-        mean_tpr += interp(all_fpr, fpr[i], tpr[i])
+        mean_tpr += np.interp(all_fpr, fpr[i], tpr[i])
 
     mean_tpr /= n_classes
 
@@ -340,7 +352,7 @@ def plot_auc(model_pred, y_test, n_classes ,name, image_type, loss_select):
 
     mean_tpr = np.zeros_like(all_fpr)
     for i in range(n_classes):
-        mean_tpr += interp(all_fpr, fpr[i], tpr[i])
+        mean_tpr += np.interp(all_fpr, fpr[i], tpr[i])
 
     mean_tpr /= n_classes
 

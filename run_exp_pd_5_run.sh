@@ -1,12 +1,12 @@
 #!/bin/bash
 # 定義變量
 DIR=logs/pd_logs
-model_select='resnet_18'
+model_select='resnet_50'
 losses_select='Contrastive_loss'
 dataset_choice='pd'
 image_type='dermatology_images'
-n_classes=3
-exp_mode='normal_mid' #normal_mid, mid_abnormal, normal_abnormal
+n_classes=2
+exp_mode='normal_abnormal' #normal_mid, mid_abnormal, normal_abnormal
 num_experiments=5
 
 # 確保存儲結果的目錄存在
@@ -29,7 +29,7 @@ do
     --model_select ${model_select} \
     --dataset_choice ${dataset_choice} \
     --category ${i} \
-    --n_epoch 100 \
+    --n_epoch 300 \
     --n_classes 2 \
     --exp_mode ${exp_mode} >> ${output_file}
   done
