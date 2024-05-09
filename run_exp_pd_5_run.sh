@@ -1,8 +1,8 @@
 #!/bin/bash
 # 定義變量
 DIR=logs/pd_logs
-model_select='resnet_50'
-losses_select='Contrastive_loss'
+model_select='resnet_18'
+losses_select='only_CE'
 dataset_choice='pd'
 image_type='dermatology_images'
 n_classes=2
