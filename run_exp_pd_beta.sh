@@ -4,10 +4,10 @@ losses_select='Contrastive_loss'
 dataset_choice='pd'
 image_type='dermatology_images'
 n_classes=2
-exp_mode='normal_mid' #mid_abnormal, normal_mid, normal_abnormal
+exp_mode='normal_abnormal' #mid_abnormal, normal_mid, normal_abnormal
 
 # Clear the output file before starting
-output_file="beta_performance.txt"
+output_file="/home/jding/Documents/PD_contrastive_research_0817/Beta_Exp/${exp_mode}_GAT_beta_performance.txt"
 echo "beta,auc" > $output_file
 
 for beta in 0.1 0.2 0.4 0.6 0.8
