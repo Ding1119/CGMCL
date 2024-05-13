@@ -69,7 +69,7 @@ from sklearn.metrics import confusion_matrix, auc
 from sklearn.metrics import plot_roc_curve
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
+# import seaborn as sns
 import matplotlib.pyplot as plt
 
 import numpy as np
@@ -85,20 +85,50 @@ from sklearn.model_selection import StratifiedKFold
 from skimage import data_dir,io,color
 from utils import *
 
+import numpy as np
+from PIL import Image
+
+import seaborn as sns
+from sklearn.metrics import confusion_matrix, classification_report
+
+def save_test_images(images, metadata, path):
+    # 轉換 metadata 為 DataFrame
+    df_metadata = pd.DataFrame(metadata)
+    
+    for idx, image_tensor in enumerate(images):
+        
+        # 獲取當前圖像的 image_id
+        image_id = df_metadata[0][idx].astype(int).item()  # 假設每個 image 只有一個對應的 image_id
+        # import pdb;pdb.set_trace()
+        # 將圖像數據從 Tensor 轉換為 NumPy 並調整通道順序
+        image = Image.fromarray((image_tensor.numpy() * 255).astype('uint8').transpose(2, 1, 0))
+
+        # 儲存圖像
+        image.save(f"{path}/00{image_id}.jpg")
+        # import pdb;pdb.set_trace()
 def copy_images(source_dir, target_dir, indices):
     """Copy images from the source directory to the target directory based on provided indices."""
+    # 獲取源資料夾中所有檔案的列表，假設只有圖片
+    files = os.listdir(source_dir)
+    files.sort()  # 確保檔案是按字典順序排序的，這通常是必需的以保持一致性
+
+    # 遍歷提供的索引列表
     for idx in indices:
-        image_path = os.path.join(source_dir, f'00{idx}.jpg')
-        target_path = os.path.join(target_dir, f'00{idx}.jpg')
-        shutil.copy(image_path, target_path)
+        if idx - 1 < len(files):  # 確保索引不會超出列表範圍
+            image_name = files[idx - 1]  # 獲取對應的檔案名
+            image_path = os.path.join(source_dir, image_name)
+            target_path = os.path.join(target_dir, image_name)
+            shutil.copy(image_path, target_path)  # 複製檔案
+        else:
+            print(f"Index {idx} is out of bounds.")  # 索引超出範圍時打印錯誤訊息
 
 
 def dataloader(datadir,skin_type, exp_mode):
     
 
-    path_img = '/home/jding/Documents/PD_contrastive_research_0817/spect_513_data'+ '/'
-    path_meta = '/home/jding/Documents/PD_contrastive_research_0817/spect_513_data' + '/' 
-    coll = io.ImageCollection('/home/jding/Documents/PD_contrastive_research_0817/spect_513_data/spect_img_a2/*.jpg')
+    path_img = '/home/feng/jeding/PD_contrastive_research_0817/spect_513_data'+ '/'
+    path_meta = '/home/feng/jeding/PD_contrastive_research_0817/spect_513_data' + '/' 
+    coll = io.ImageCollection('/home/feng/jeding/PD_contrastive_research_0817/spect_513_data/spect_img_a2/*.jpg')
 
     #coll = io.ImageCollection(r'C:\Users\adm\SPECT_3_3\mask_three\*.jpg')
     #coll = io.ImageCollection(r'C:\Users\adm\SPECT_3_3\all_SPECT_RGB\*.jpg')
@@ -120,15 +150,22 @@ def dataloader(datadir,skin_type, exp_mode):
     # raw_data = torch.flatten(raw_data, start_dim=1)
     raw_data = np.array(raw_data)
     _, raw_patients_feature_412 = transform_label(np.asarray(label_630_id.iloc[:,8:20]),label_2 ,label_3, exp_mode)
+    _, raw_patients_feature_412_df = transform_label_output_df(label_630_id,label_2 ,label_3, exp_mode)
     # raw_patients_feature_412 = np.asarray(label_630_id.iloc[:,8:20])
     # import pdb;pdb.set_trace()
 
     raw_image_train = raw_data[0:train_length]
     raw_image_test = raw_data[train_length:]
+    
     # import pdb;pdb.set_trace()
+    path_prefix = f'/home/feng/jeding/PD_contrastive_research_0817/{exp_mode}_saved_fig'
+    raw_image_test_save = torch.from_numpy(raw_image_test)
+# 假設 raw_image_test 已經是一個 NumPy 數組並且準備好用於儲存
+    # import pdb;pdb.set_trace()
+    save_test_images(raw_image_test_save, raw_patients_feature_412_df[train_length:], path_prefix)
     # raw_image_train = np.load('/Users/test/Documents/Contrastive_PD/skin_dataset_ok/clinical_images/train_clinic_f_413.npy') /255
     # raw_image_test = np.load('/Users/test/Documents/Contrastive_PD/skin_dataset_ok/clinical_images/test_clinic_f_395.npy') /255
-
+    # import pdb;pdb.set_trace()
 
     raw_f_train = raw_patients_feature_412[0:train_length]
     raw_f_test = raw_patients_feature_412[train_length:]
@@ -642,25 +679,44 @@ def train_eval(datadir,skin_type, loss_select, model_select , dataset_choice ,ca
         print("Loss:", loss_select, "class_name",class_name,"Accuracy:", accuracy)
         print(classification_report(y_test.cpu().detach().numpy(), pred.cpu().detach().numpy() ))
 
-    
-    false_positives = (pred > y_test).nonzero(as_tuple=True)[0].cpu().numpy()
-    false_negatives = (pred < y_test).nonzero(as_tuple=True)[0].cpu().numpy()
+        # import pdb;pdb.set_trace()
+        false_positives = (pred > y_test).nonzero(as_tuple=True)[0].cpu().numpy()
+        false_negatives = (pred < y_test).nonzero(as_tuple=True)[0].cpu().numpy()
+        
 
-    # Save results to JSON
-    result_data = {'FalsePositives': false_positives.tolist(), 'FalseNegatives': false_negatives.tolist()}
+        # Save results to JSON
+        result_data = {'FalsePositives': false_positives.tolist(), 'FalseNegatives': false_negatives.tolist()}
 
-    with open('false_samples.json', 'w') as json_file:
-        json.dump(result_data, json_file, indent=4)
+        with open('false_samples.json', 'w') as json_file:
+            json.dump(result_data, json_file, indent=4)
 
-    # Prepare directories for saving false classified images
-    target_false_positives_dir = '/home/jding/Documents/PD_contrastive_research_0817/saved_fig/target_false_positives'
-    os.makedirs(target_false_positives_dir, exist_ok=True)
-    source_dif = '/home/jding/Documents/PD_contrastive_research_0817/spect_513_data/spect_img_a2'
-    copy_images(source_dif, target_false_positives_dir, false_positives)
+        # Prepare directories for saving false classified images
+        # import pdb;pdb.set_trace()
+        target_false_positives_dir = '/home/feng/jeding/PD_contrastive_research_0817/test_out_results/target_false_positives'
+        os.makedirs(target_false_positives_dir, exist_ok=True)
+        source_dif = f'/home/feng/jeding/PD_contrastive_research_0817/{exp_mode}_saved_fig'
+        copy_images(source_dif, target_false_positives_dir, false_positives)
 
-    target_false_negatives_dir = '/home/jding/Documents/PD_contrastive_research_0817/saved_fig/target_false_negatives'
-    os.makedirs(target_false_negatives_dir, exist_ok=True)
-    copy_images(source_dif, target_false_negatives_dir, false_negatives)
+        target_false_negatives_dir = '/home/feng/jeding/PD_contrastive_research_0817/test_out_results/target_false_negatives'
+        os.makedirs(target_false_negatives_dir, exist_ok=True)
+        copy_images(source_dif, target_false_negatives_dir, false_negatives)
+
+        cm = confusion_matrix(y_test.cpu().detach().numpy(), pred.cpu().detach().numpy())
+        print("Confusion Matrix:")
+        print(cm)
+
+        # 可视化混淆矩阵并保存为图像
+        plt.figure(figsize=(10,7))  # 可以调整图形的大小以更好地适应字体大小的增加
+        sns.heatmap(cm, annot=True, fmt="d", cmap='Blues', annot_kws={"size": 30},
+                    xticklabels=['Mid-abnormal', 'Abnormal'],  # 自定义X轴标签
+                    yticklabels=['Mid-abnormal', 'Abnormal'])  # 自定义Y轴标签)  # 增加格内数字大小
+        plt.title('Confusion Matrix', fontsize=20)  # 增加标题大小
+        plt.ylabel('True Label', fontsize=20)  # 增加y轴标签大小
+        plt.xlabel('Predicted Label', fontsize=20)  # 增加x轴标签大小
+        plt.xticks(fontsize=20)  # 增加x轴刻度大小
+        plt.yticks(fontsize=20)  # 增加y轴刻度大小
+        plt.savefig(f'{exp_mode}_confusion_matrix.png')  # 保存图像
+        plt.close()
 
 
 
@@ -702,8 +758,8 @@ def main():
     model_select = 'resnet_18'
     dataset_choice = 'pd'
     category = 'your_category'  # 设置正确的类别值
-    exp_mode='normal_mid'
-    n_epoch = 30
+    exp_mode='mid_abnormal'
+    n_epoch = 300
     n_classes = 2
 
     train_eval(img_data_dir, skin_type, losses_choice, model_select, dataset_choice, category, n_epoch, n_classes, exp_mode)
