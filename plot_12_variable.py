@@ -88,8 +88,8 @@ def dataloader_cv(datadir, skin_type, num_folds=5):
     
     if datadir == 'pd':
         path_img = '/home/feng/jeding/PD_contrastive_research_0817/spect_513_data' + '/'
-        path_meta = '/home/feng/jeding/PD_contrastive_research_0817/spect_513_data' + '/'
-        coll = io.ImageCollection('/home/feng/jeding/PD_contrastive_research_0817/spect_513_data/spect_img_a2/*.jpg')
+        path_meta = '/home/jding/Documents/PD_contrastive_research_0817/spect_513_data' + '/' 
+        coll = io.ImageCollection('/home/jding/Documents/PD_contrastive_research_0817/spect_513_data/spect_img_a2/*.jpg')
         
         raw_image = io.concatenate_images(coll)
         
@@ -597,7 +597,7 @@ def train_eval(datadir,skin_type, loss_select, model_select , dataset_choice ,ca
             if loss_select == 'Contrastive_loss':
                 adj = adj_train_img +  adj_f_knn_train
                 diag = torch.diag(adj.sum(dim=1))
-                loss_extra = criterion2( emb, adj_train_img, adj_f_knn_train, y, output1, output2, diag).to(device)
+                loss_extra = criterion2( emb, adj_train_img, adj_f_knn_train, y, output1, output2, diag, margin=0.03).to(device)
                 loss = (1-alpha)*(loss_ce1 + loss_ce2) + alpha* loss_extra
 
             elif loss_select == 'MGEC_loss':
@@ -731,18 +731,18 @@ def train_eval(datadir,skin_type, loss_select, model_select , dataset_choice ,ca
                     ax = axes[i]
                     # Plot each category
                     ax.scatter(normal_data[:, i], normal_data[:, i + 1], c='green', marker='o', edgecolors='black', label='Normal')
-                    ax.scatter(neurodegenerative_data[:, i], neurodegenerative_data[:, i + 1], c='red', marker='^', edgecolors='black', label='Abnormal')
+                    ax.scatter(neurodegenerative_data[:, i], neurodegenerative_data[:, i + 1], c='#FFA07A', marker='^', edgecolors='black', label='MA')
                     if other_data.size > 0:
-                        ax.scatter(other_data[:, i], other_data[:, i + 1], c='#FFA07A', marker='s', edgecolors='black', label='MA')
+                        ax.scatter(other_data[:, i], other_data[:, i + 1], c='red', marker='s', edgecolors='black', label='Abnormal')
 #                         ax.scatter(other_data[:, i], other_data[:, i + 1], c='blue', marker='s', edgecolors='black', label='Other')
                          
                     ax.set_xlabel(x_labels[i % len(x_labels)], fontsize=18)
                     ax.set_ylabel(y_labels[i % len(y_labels)], fontsize=18)
                     ax.set_title(titles[i % len(titles)], fontsize=20)
-                    ax.legend(fontsize=10)
+                    ax.legend(fontsize=15)
                 plt.subplots_adjust(hspace=0.4, wspace=0.4)
 #                 plt.savefig("plot_output.png", format='png', dpi=300)  # Increased DPI for better resolution
-                plt.savefig("plot_output.pdf", format='pdf')
+                plt.savefig("plot_output_10_14.pdf", format='pdf')
 #                 plt.close(fig)  # Close the figure to free up memory
 
                 
