@@ -2,8 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.modules.linear import Linear
-from sklearn.cluster import KMeans
-from keras.applications.mobilenet import MobileNet, preprocess_input
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 import os
 #os.environ['CUDA_LAUNCH_BLOCKING'] = "0"
@@ -35,7 +33,6 @@ class GraphConvolution_img(nn.Module):
     def __init__(self, in_features, out_features):
         super(GraphConvolution_img, self).__init__()
         self.linear1 = nn.Linear(in_features, out_features)
-        # self.linear2 = nn.Linear( 65536, 12)
         self.linear2 = nn.Linear(1024, 256)
         self.linear3 = nn.Linear(256, 128)
         self.linear4 = nn.Linear(128, 3)
@@ -43,7 +40,6 @@ class GraphConvolution_img(nn.Module):
         
 
     def forward(self, x, adjacency):
-        # x = x.T @ self.linear(x)
        
         x = self.linear2(x)
         # import pdb;pdb.set_trace()
@@ -58,21 +54,17 @@ class GraphConvolution_f(nn.Module):
     def __init__(self, in_features, out_features):
         super(GraphConvolution_f, self).__init__()
         self.linear1 = nn.Linear(in_features, out_features)
-        # self.linear2 = nn.Linear( 65536, 12)
         self.linear2 = nn.Linear(256, 8)
         self.linear3 = nn.Linear(8, 3)
         self.sigmoid = nn.Sigmoid()
         
 
     def forward(self, x, adjacency):
-        # x = x.T @ self.linear(x)
-        
-        # x = self.linear2(x)
-        # import pdb;pdb.set_trace()
+
         x = torch.matmul(adjacency, x)
         x = self.linear3(x)
         x = self.sigmoid(x)
-        # import pdb;pdb.set_trace()
+
         return x
     
 class AttentionNetwork_img(nn.Module):
@@ -84,9 +76,9 @@ class AttentionNetwork_img(nn.Module):
     
     def forward(self, x):
         x = self.fc1(x)
-        # x = F.dropout(x, p=0.5)
+
         x = self.sigmoid(x)
-        # x = F.dropout(x, p=0.5)
+
         x = self.fc2(x)
         attention_weights = self.sigmoid(x)
         return attention_weights
@@ -151,7 +143,7 @@ class GraphAttentionLayer(nn.Module):
         h_prime = torch.matmul(attention, h)
         return h_prime
 
-# 定義 Graph Attention Network
+
 class GAT_img(nn.Module):
     def __init__(self, in_features, hidden_features, num_classes):
         super(GAT_img, self).__init__()
@@ -181,22 +173,14 @@ class GAT_f(nn.Module):
 class Model_SKIN(nn.Module):
     def __init__(self, projection, input_resnet, n_classes):
         super(Model_SKIN, self).__init__()
-        #self.encoder = CNNEncoder()
         self.cnn_encoder = CNN()
         self.input_resnet = input_resnet
         self.n_classes = n_classes
-        self.kmeans = KMeans(n_clusters=3) 
-        # self.cnn_encoder = DeepEncoder() #torch.Size([300, 3, 64, 64])
-        # self.cnn_encoder = CNNEncoder()
-        # self.vgg_encoder = nn.Sequential(*list(vgg16.features.children()))
         self.gcn_img = GraphConvolution_img(64, 3)
         self.gcn_f = GraphConvolution_f(12, 3)
         self.gat_img = GAT_img(1024,256,3)
         self.gat_f = GAT_f(8,5,3)
         self.projection = projection
-   
-        # self.linear_vgg1 = nn.Linear(65536, 1024)
-        # self.linear_vgg2 = nn.Linear(1024, 256)
         self.linear1 = nn.Linear(259, 2)
         self.linear2 = nn.Linear(256, 2)
         self.linear3 = nn.Linear(1030, 256)
@@ -207,32 +191,19 @@ class Model_SKIN(nn.Module):
         self.sigmoid = nn.Sigmoid()
         self.softmax = nn.Softmax(dim=1)
 
-    def forward(self, x, x_f,adjacency_img, adjacency_f):
-        # import pdb;pdb.set_trace()
-        # x = self.encoder(x) #torch.Size([300, 65536])
-        
+    def forward(self, x, x_f,adjacency_img, adjacency_f, epoch):
+
         x_encoder = self.input_resnet(x)
-        # import pdb;pdb.set_trace()
-        #x_encoder = self.cnn_encoder(x)
+
         
         x_gat_img = self.gat_img(x_encoder, adjacency_img)
-        # x_encoder = self.vgg_encoder(x)
-        # x_encoder = torch.flatten(x_encoder, start_dim=1)
-        # x_encoder = self.linear_vgg1(x_encoder)
-        # x_encoder = self.linear_vgg2(x_encoder)
-        # import pdb;pdb.set_trace()
-        # import pdb;pdb.set_trace()
         
         x_gat_f = self.gat_f(x_f, adjacency_img)
-        # import pdb;pdb.set_trace()
+
         x_gcn_f = self.gcn_f(x_f, adjacency_f)
-        # import pdb;pdb.set_trace()
-        # kmeans_output_f = self.kmeans.fit_transform(x_gcn_f.detach().numpy())
-        # kmeans_tensor_f = torch.from_numpy(kmeans_output_f).float().to(x_gcn_f.device)
-        
+
         x_gcn_img = self.gcn_img(x_encoder, adjacency_img)
-        # kmeans_output_img = self.kmeans.fit_transform(x_gcn_img.detach().numpy())
-        # kmeans_tensor_img = torch.from_numpy(kmeans_output_img).float().to(x_gcn_img.device)
+
 
         x_f_fusion = torch.cat((x_f, x_gat_f), 1)
         x_img = torch.cat((x_encoder, x_gat_img), 1)
@@ -242,50 +213,19 @@ class Model_SKIN(nn.Module):
         w_att_img = self.attention_img(x_img)
         
         attended_gat_f = x_gat_f * w_att_f
-        attended_gat_img = x_gat_img * w_att_img
-        x_f_att = torch.cat((x_f_fusion, attended_gat_f), 1) # torch.Size([300, 17])
-        x_img_att = torch.cat((x_img, attended_gat_img), 1) # torch.Size([300, 1029])
-        
- 
+        attended_gat_img = x_gcn_img * w_att_img
+        x_f_att = torch.cat((x_f_fusion, attended_gat_f), 1)
+        x_img_att = torch.cat((x_img, attended_gat_img), 1)
+
         emb1  = self.linear_f(x_f_att)
-        # emb1  = self.linear4(emb1)
         
         emb2  = self.linear3(x_img_att)
         emb2  = self.linear4(emb2)
-        #import pdb;pdb.set_trace()
-        # x1 = self.linear1(x_f)
-      
 
-        # # x2 = self.linear2(x_encoder)
-        # x2 = self.linear1(x_img)
-
-        # x1 = self.softmax(x1)
-        # x2 = self.softmax(x2)
-
-        # x1 = self.linear1(attended_gcn)
         z = emb1 + emb2
         
-        #import pdb;pdb.set_trace()
-       
-        #emb2 =  torch.from_numpy(emb2).to(torch.float32).to(device)
-        #import pdb;pdb.set_trace()
-
-    
-        #z = torch.from_numpy(z).to(device)
-        #emb2 = torch.from_numpy(emb2).float().to(device)
-        
-    
-
-        #x1 = self.softmax(emb1) 
-        #x2 = self.softmax(emb2) 
-        
-        #import pdb;pdb.set_trace()
-    
-        z  = self.softmax(z).to(torch.float32)
-        
-        #import pdb;pdb.set_trace()
-        
-
+        z  = self.sigmoid(z).to(torch.float32)
+           
         return emb1, emb2, z
     
     def nonlinear_transformation(self, h):
