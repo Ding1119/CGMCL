@@ -5,7 +5,7 @@
 
 
 <p align="center">
-    <img src="assets/fig1.png" width="100%"\>
+    <img src="imgs/fig1.png" width="100%"\>
 </p>
 
 
@@ -96,7 +96,7 @@ bash run_exp_skin_v1.sh
 Below is a comparison of multi-class classification performance between unimodal and proposed CGMCL on the melanoma dataset:
 
 <p align="center">
-    <img src="assets/exp_table.png" width="100%"\>
+    <img src="imgs/exp_table.png" width="100%"\>
 </p>
 
 ### Welcome to cite our paper from our research paper
