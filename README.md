@@ -99,7 +99,7 @@ Below is a comparison of multi-class classification performance between unimodal
     <img src="imgs/exp_table.png" width="100%"\>
 </p>
 
-### Welcome to cite our paper from our research paper
+### We welcome you to cite our paper based on our work
 
 ```
 @article{ding2024enhancing,
