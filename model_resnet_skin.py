@@ -224,7 +224,8 @@ class Model_SKIN(nn.Module):
 
         z = emb1 + emb2
         
-        z  = self.sigmoid(z).to(torch.float32)
+
+        z  = self.softmax(z).to(torch.float32)
            
         return emb1, emb2, z
     

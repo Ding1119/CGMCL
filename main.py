@@ -28,7 +28,7 @@ def train_eval(datadir,skin_type, loss_select, model_select , dataset_choice ,ca
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")   
     torch.cuda.is_available()
     
-
+ 
     if model_select == 'resnet_18':
         model_net = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1)
         # resnet = models.resnet18(pretrained=True)
@@ -97,9 +97,9 @@ def train_eval(datadir,skin_type, loss_select, model_select , dataset_choice ,ca
         if loss_select == 'Contrastive_loss':
             adj = adj_train_img +  adj_f_knn_train
             diag = torch.diag(adj.sum(dim=1))
-            loss_extra = criterion2( emb, adj_train_img, adj_f_knn_train, y, output1, output2, diag, margin).to(device)
-            # loss = (1-alpha)*(loss_ce1 + loss_ce2) + alpha* loss_extra
-            loss = loss_ce1 + loss_ce2 + loss_extra
+            loss_extra = criterion2( emb, adj_train_img, adj_f_knn_train, y, output1, output2, diag, n_classes, margin).to(device)
+            loss = (1-alpha)*(loss_ce1 + loss_ce2) + alpha* loss_extra
+            # loss = loss_ce1 + loss_ce2 + loss_extra
             # loss = loss_ce1 + loss_ce2
 
 
@@ -109,7 +109,7 @@ def train_eval(datadir,skin_type, loss_select, model_select , dataset_choice ,ca
 
     model.eval()
     with torch.no_grad():
-        # import pdb;pdb.set_trace()
+   
         image_data_test = image_data_test.to(device)
         test_feature_data = test_feature_data.to(device)
         adj_test_img = adj_test_img.to(device)
@@ -118,18 +118,18 @@ def train_eval(datadir,skin_type, loss_select, model_select , dataset_choice ,ca
         test_output1, test_output2, emb  = model(image_data_test, test_feature_data , adj_test_img, adj_f_knn_test,epoch)
         
         m = nn.Softmax(dim=1)
-        # import pdb;pdb.set_trace()
+  
         test_output = test_output1 + test_output2
 
         pred =  m(test_output).argmax(dim=1)
 
         y_test = torch.from_numpy(label_return(dataset_choice ,class_name, "test", exp_mode)).to(device)
-
+      
 
         correct = (pred  == y_test).sum().item()
         accuracy = correct / len(y_test)
         
-        # import pdb;pdb.set_trace()
+ 
         print(f"++++Use {model_select} model+++")
 
         print(classification_report(y_test.cpu().detach().numpy(), pred.cpu().detach().numpy() ))

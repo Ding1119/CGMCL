@@ -15,13 +15,14 @@ class WeightedCrossEntropyLoss(nn.Module):
         loss = nn.functional.cross_entropy(inputs, targets, weight=self.weight, reduction=self.reduction)
         return loss
 
-def contrastive_loss(emb, adj1, adj2, label, emb1, emb2, diag, margin):
+
+def contrastive_loss(emb, adj1, adj2, label, emb1, emb2, diag, n_classes, margin):
     margin = 0.03
     mse_loss = nn.MSELoss()
     bce_loss = nn.BCEWithLogitsLoss()
 
     similarity_matrix = emb @ emb.T
-    label = F.one_hot(label, num_classes=3).to(device)
+    label = F.one_hot(label, n_classes).to(device)
     similarity_matrix = similarity_matrix.to(device)
     batch_size = similarity_matrix.size(0)
 
@@ -58,4 +59,3 @@ def contrastive_loss(emb, adj1, adj2, label, emb1, emb2, diag, margin):
 
 
     return loss / ((2 * batch_size) ** 2)
-
