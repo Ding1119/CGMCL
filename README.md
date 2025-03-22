@@ -93,7 +93,7 @@ bash run_exp_skin_v1.sh
 
 ### 📊 Experimental Results
 
-Below is a comparison of multi-class classification performance between unimodal and proposed CGMCL on the melanoma dataset:
+Below is a comparison of average multi-class classification performance between unimodal and proposed CGMCL on the melanoma dataset:
 
 <p align="center">
     <img src="imgs/exp_table.png" width="100%"\>
