@@ -1,21 +1,6 @@
-from sklearn.metrics import confusion_matrix, accuracy_score, f1_score, roc_auc_score, recall_score, precision_score
-from sklearn.metrics import f1_score, roc_auc_score, average_precision_score, confusion_matrix
-from sklearn.metrics import roc_curve,auc
-# from scipy import interp
-import matplotlib.pyplot as plt
-from sklearn.neighbors import NearestNeighbors
 import pandas as pd
 import numpy as np
-from sklearn import metrics
-import torch.nn.functional as F
-import torch
 from collections import Counter
-from itertools import cycle
-import torch
-import torch
-from sklearn.metrics.cluster import normalized_mutual_info_score
-from sklearn.metrics import adjusted_rand_score
-from sklearn.metrics import accuracy_score, f1_score, precision_score, roc_curve, auc
 
 def label_return(dataset_choice, category,label, exp_mode):
     if dataset_choice == 'skin':

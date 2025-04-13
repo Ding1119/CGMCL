@@ -19,7 +19,7 @@ from itertools import cycle
 from utils import label_return
 from model_resnet_skin import Projection, Model_SKIN, CNN
 from losses import WeightedCrossEntropyLoss, contrastive_loss
-from data_handlder.load_dataset import dataloader
+from data_handler.load_dataset import dataloader
 import argparse
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = "0"
