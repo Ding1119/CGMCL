@@ -112,9 +112,14 @@ Below is a comparison of average multi-class classification performance between 
 
 ---
 
+### 📝 MIT License
 
-### 📝 License
-This project is licensed under the MIT License.
+
+Copyright (c) 2025 Jun-En Ding
+
+This repository's source code is available under the [MIT License](https://github.com/Ding1119/CGMCL.git/LICENSE).
+
+
 
 ---
 
